@@ -1,12 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { supabase } from '../lib/supabase'
 
-const roles = ['Semua', 'Imam', 'Muadzin', 'Marbot']
-
-const initialRoster = [
-  { id: 1, name: 'Ust. Hasanudin', role: 'Imam Utama', initials: 'UH', hadir: 28, izin: 2, alpha: 0, tarif: 'Rp 50.000 / Kehadiran', gaji: 'Rp 1.400.000' },
-  { id: 2, name: 'Ahmad Ibrahim', role: 'Muadzin', initials: 'AI', hadir: 30, izin: 0, alpha: 0, tarif: 'Rp 30.000 / Kehadiran', gaji: 'Rp 900.000' },
-  { id: 3, name: 'Budi Rahman', role: 'Marbot', initials: 'BR', hadir: 25, izin: 3, alpha: 2, tarif: 'Bulanan (Flat)', gaji: 'Rp 1.500.000' },
-]
+const roles = ['Semua', 'Imam', 'Muadzin', 'Bilal', 'Marbot']
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('id-ID', {
@@ -36,9 +31,15 @@ function StatCard({ label, value, icon, color, trend }) {
 
 function RosterTable({ roster }) {
   const roleBadge = (role) => {
-    if (role.includes('Imam')) return 'bg-primary text-on-primary'
-    if (role === 'Muadzin') return 'bg-surface-variant text-on-surface-variant'
+    if (role.includes('imam')) return 'bg-primary text-on-primary'
+    if (role === 'muadzin') return 'bg-surface-variant text-on-surface-variant'
+    if (role === 'bilal') return 'bg-emerald-100 text-emerald-800'
     return 'bg-surface-variant text-on-surface-variant'
+  }
+
+  const roleLabel = (role) => {
+    const labels = { imam: 'Imam', muadzin: 'Muadzin', bilal: 'Bilal', marbot: 'Marbot' }
+    return labels[role] || role
   }
 
   return (
@@ -65,9 +66,9 @@ function RosterTable({ roster }) {
                       {item.initials}
                     </div>
                     <div>
-                      <p className="font-medium text-on-surface">{item.name}</p>
+                      <p className="font-medium text-on-surface">{item.nama}</p>
                       <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${roleBadge(item.role)}`}>
-                        {item.role}
+                        {roleLabel(item.role)}
                       </span>
                     </div>
                   </div>
@@ -90,7 +91,7 @@ function RosterTable({ roster }) {
                   </span>
                 </td>
                 <td className="p-4 text-right tabular-nums text-on-surface-variant">{item.tarif}</td>
-                <td className="p-4 text-right font-medium text-primary tabular-nums">{item.gaji}</td>
+                <td className="p-4 text-right font-medium text-primary tabular-nums">{formatCurrency(item.gaji)}</td>
                 <td className="p-4 text-center">
                   <button className="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-md hover:bg-surface-container-high">
                     <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>visibility</span>
@@ -102,7 +103,7 @@ function RosterTable({ roster }) {
         </table>
       </div>
       <div className="p-4 border-t border-outline-variant bg-surface-bright flex justify-between items-center text-body-sm text-on-surface-variant">
-        <span>Menampilkan 1-{roster.length} dari 24 petugas</span>
+        <span>Menampilkan 1-{roster.length} dari {roster.length} petugas</span>
         <div className="flex gap-1">
           <button className="w-8 h-8 rounded flex items-center justify-center hover:bg-surface-container-high disabled:opacity-50" disabled>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_left</span>
@@ -123,12 +124,77 @@ export default function LaporanGaji() {
   const [selectedMonth, setSelectedMonth] = useState('Oktober 2023')
   const [selectedRole, setSelectedRole] = useState('Semua')
   const [search, setSearch] = useState('')
+  const [roster, setRoster] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredRoster = initialRoster.filter((item) => {
-    const matchesRole = selectedRole === 'Semua' || item.role.includes(selectedRole)
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.role.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    fetchRoster()
+  }, [selectedMonth])
+
+  const fetchRoster = async () => {
+    setLoading(true)
+    const { data: petugasData, error: petugasError } = await supabase
+      .from('petugas')
+      .select('*')
+      .eq('is_active', true)
+      .order('nama')
+
+    if (petugasError) {
+      console.error('Error fetching petugas:', petugasError)
+      setLoading(false)
+      return
+    }
+
+    const [month, year] = selectedMonth.split(' ')
+    const yearNum = parseInt(year)
+
+    const rosterData = await Promise.all(
+      (petugasData || []).map(async (p) => {
+        const { data: presensiData } = await supabase
+          .from('presensi')
+          .select('status')
+          .eq('petugas_id', p.id)
+          .gte('tanggal', `${yearNum}-${String(['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].indexOf(month) + 1).padStart(2, '0')}-01`)
+          .lt('tanggal', `${yearNum}-${String(['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].indexOf(month) + 2).padStart(2, '0')}-01`)
+
+        const hadir = presensiData?.filter((pr) => pr.status === 'hadir').length || 0
+        const izin = presensiData?.filter((pr) => pr.status === 'izin').length || 0
+        const alpha = presensiData?.filter((pr) => pr.status === 'alpha').length || 0
+
+        let gaji = 0
+        if (p.tipe_honor === 'per_hadir') {
+          gaji = hadir * (p.honor_per_hadir || 0)
+        } else {
+          gaji = p.honor_bulanan || 0
+        }
+
+        return {
+          id: p.id,
+          nama: p.nama,
+          role: p.role,
+          initials: p.nama.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2),
+          hadir,
+          izin,
+          alpha,
+          tarif: p.tipe_honor === 'per_hadir' ? formatCurrency(p.honor_per_hadir || 0) + ' / Kehadiran' : 'Bulanan (Flat)',
+          gaji,
+        }
+      })
+    )
+
+    setRoster(rosterData)
+    setLoading(false)
+  }
+
+  const filteredRoster = roster.filter((item) => {
+    const matchesRole = selectedRole === 'Semua' || item.role === selectedRole.toLowerCase()
+    const matchesSearch = item.nama.toLowerCase().includes(search.toLowerCase()) || item.role.toLowerCase().includes(search.toLowerCase())
     return matchesRole && matchesSearch
   })
+
+  const totalGaji = roster.reduce((sum, item) => sum + item.gaji, 0)
+  const totalPetugas = roster.length
+  const avgKehadiran = roster.length > 0 ? Math.round(roster.reduce((sum, item) => sum + item.hadir, 0) / roster.length) : 0
 
   return (
     <div className="max-w-container-max mx-auto px-margin-mobile md:px-6 pt-6 pb-12 space-y-stack-lg">
@@ -164,15 +230,15 @@ export default function LaporanGaji() {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           label="Total Estimasi Gaji"
-          value="Rp 12.450.000"
+          value={formatCurrency(totalGaji)}
           icon="payments"
           color="bg-primary/5"
-          trend="Bulan berjalan (Oktober 2023)"
+          trend={`Bulan ${selectedMonth}`}
         />
-        <StatCard label="Total Petugas Aktif" value="24" icon="group" color="bg-secondary/5" trend="Imam, Muadzin, & Marbot" />
+        <StatCard label="Total Petugas Aktif" value={totalPetugas.toString()} icon="group" color="bg-secondary/5" trend="Imam, Muadzin, & Marbot" />
         <StatCard
           label="Rata-rata Kehadiran"
-          value="92%"
+          value={`${avgKehadiran}%`}
           icon="fact_check"
           color="bg-primary-fixed/30"
           trend={
@@ -215,7 +281,13 @@ export default function LaporanGaji() {
       </div>
 
       {/* Detailed Roster Table */}
-      <RosterTable roster={filteredRoster} />
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <RosterTable roster={filteredRoster} />
+      )}
     </div>
   )
 }

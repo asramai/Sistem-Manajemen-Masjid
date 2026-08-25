@@ -1,5 +1,6 @@
 import React from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Navigate } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
 import AttendancePage from './pages/AttendancePage'
 import LaporanGaji from './pages/LaporanGaji'
 import LoginPage from './pages/LoginPage'
@@ -86,11 +87,31 @@ function BottomNav({ currentPath }) {
 export default function App() {
   const location = useLocation()
   const currentPath = location.pathname
-  const isLoginPage = currentPath === '/login'
+  const { session, loading } = useAuth()
+  const navigate = useNavigate()
+
+  if (loading) {
+    return (
+      <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="font-body-md text-on-surface-variant">Memuat...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!session && currentPath !== '/login') {
+    return <Navigate to="/login" replace />
+  }
+
+  if (session && currentPath === '/login') {
+    return <Navigate to="/" replace />
+  }
 
   return (
     <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col pb-24 md:pb-0">
-      {!isLoginPage && <TopAppBar currentPath={currentPath} />}
+      {session && <TopAppBar currentPath={currentPath} />}
       <main className="flex-grow">
         {currentPath === '/login' && <LoginPage />}
         {currentPath === '/laporan' && <LaporanGaji />}
@@ -99,7 +120,7 @@ export default function App() {
         {currentPath === '/rekap' && <RekapKehadiranSaya />}
         {currentPath === '/' && <AttendancePage />}
       </main>
-      {!isLoginPage && <BottomNav currentPath={currentPath} />}
+      {session && <BottomNav currentPath={currentPath} />}
     </div>
   )
 }

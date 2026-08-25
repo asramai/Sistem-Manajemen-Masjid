@@ -1,15 +1,30 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { signIn } = useAuth()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    navigate('/')
+    setLoading(true)
+    setError('')
+    try {
+      const { error } = await signIn(email, password)
+      if (error) {
+        setError(error.message || 'Login gagal')
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan saat login')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -26,6 +41,11 @@ export default function LoginPage() {
         <p className="font-body-md text-body-md text-on-surface-variant mb-lg text-center">
           Masjid Pohuwato Management System
         </p>
+        {error && (
+          <div className="w-full mb-4 p-3 rounded-lg bg-error-container text-on-error-container text-sm">
+            {error}
+          </div>
+        )}
         <form className="w-full flex flex-col gap-md" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-xs">
             <label className="font-label-md text-label-md text-on-surface" htmlFor="email">
@@ -80,8 +100,12 @@ export default function LoginPage() {
               Lupa Password?
             </a>
           </div>
-          <button className="w-full bg-primary hover:bg-surface-tint text-on-primary font-title-md text-title-md py-sm rounded-lg transition-colors duration-200 mt-sm" type="submit">
-            Masuk
+          <button
+            className="w-full bg-primary hover:bg-surface-tint text-on-primary font-title-md text-title-md py-sm rounded-lg transition-colors duration-200 mt-sm"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Memuat...' : 'Masuk'}
           </button>
           <div className="flex justify-center mt-sm">
             <a className="font-label-md text-label-md text-primary hover:text-surface-tint underline decoration-primary/30 hover:decoration-primary transition-all" href="#">

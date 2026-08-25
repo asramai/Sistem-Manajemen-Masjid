@@ -1,13 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { supabase } from '../lib/supabase'
 
 const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya']
-
-const initialOfficers = [
-  { id: 1, name: 'Ustadz Ahmad Hassan', role: 'Imam', initials: 'AH', status: 'hadir', schedule: 'Jadwal Utama' },
-  { id: 2, name: 'Budi Rahman', role: 'Muadzin', initials: 'BR', status: 'izin', schedule: 'Jadwal Utama' },
-  { id: 3, name: 'Muhammad Yusuf', role: 'Bilal', initials: 'MY', status: 'hadir', schedule: 'Jadwal Cadangan' },
-  { id: 4, name: 'Abdul Rahman', role: 'Muadzin', initials: 'AR', status: 'alpha', schedule: 'Jadwal Cadangan' },
-]
 
 function formatDate(date) {
   return new Intl.DateTimeFormat('id-ID', {
@@ -15,6 +9,15 @@ function formatDate(date) {
     month: 'long',
     year: 'numeric',
   }).format(date)
+}
+
+function getInitials(name) {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 }
 
 function PrayerTabs({ selected, onSelect }) {
@@ -39,9 +42,17 @@ function PrayerTabs({ selected, onSelect }) {
 
 function AttendanceRow({ officer, onStatusChange, onSubstituteChange }) {
   const roleColors = {
-    Imam: 'bg-slate-900 text-white border border-slate-900',
-    Muadzin: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
-    Bilal: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+    imam: 'bg-slate-900 text-white border border-slate-900',
+    muadzin: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+    bilal: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+    marbot: 'bg-amber-100 text-amber-800 border border-amber-200',
+  }
+
+  const roleLabels = {
+    imam: 'Imam',
+    muadzin: 'Muadzin',
+    bilal: 'Bilal',
+    marbot: 'Marbot',
   }
 
   return (
@@ -49,18 +60,18 @@ function AttendanceRow({ officer, onStatusChange, onSubstituteChange }) {
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-primary-container font-h3">
-            {officer.initials}
+            {officer.initials || getInitials(officer.nama)}
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <p className="font-body-lg text-body-lg font-medium text-on-surface">{officer.name}</p>
+              <p className="font-body-lg text-body-lg font-medium text-on-surface">{officer.nama}</p>
               <span
                 className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${roleColors[officer.role] || 'bg-gray-100 text-gray-800'}`}
               >
-                {officer.role}
+                {roleLabels[officer.role] || officer.role}
               </span>
             </div>
-            <p className="font-body-sm text-body-sm text-on-surface-variant">{officer.schedule}</p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">{officer.tipe_honor === 'bulanan' ? 'Bulanan (Flat)' : 'Per Kehadiran'}</p>
           </div>
         </div>
         <div className="flex bg-surface-container rounded-lg p-1 border border-outline-variant/50 w-full md:w-auto">
@@ -92,7 +103,7 @@ function AttendanceRow({ officer, onStatusChange, onSubstituteChange }) {
       {officer.status === 'izin' && (
         <div className="mt-4 pt-4 border-t border-amber-100">
           <label className="font-label-md text-label-md text-on-surface block mb-2">
-            Petugas Pengganti ({officer.name} - Izin)
+            Petugas Pengganti ({officer.nama} - Izin)
           </label>
           <div className="relative">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
@@ -102,7 +113,7 @@ function AttendanceRow({ officer, onStatusChange, onSubstituteChange }) {
               className="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all font-body-md text-on-surface"
               placeholder="Pilih atau ketik nama pengganti..."
               type="text"
-              value={officer.substitute || ''}
+              value={officer.petugas_pengganti_nama || ''}
               onChange={(e) => onSubstituteChange(officer.id, e.target.value)}
             />
           </div>
@@ -142,7 +153,75 @@ function StatsCard({ hadir, izin, alpha }) {
 export default function AttendancePage() {
   const [selectedPrayer, setSelectedPrayer] = useState('Subuh')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  const [officers, setOfficers] = useState(initialOfficers)
+  const [petugas, setPetugas] = useState([])
+  const [jadwal, setJadwal] = useState([])
+  const [presensiMap, setPresensiMap] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  useEffect(() => {
+    fetchPresensi()
+  }, [selectedDate, selectedPrayer, jadwal])
+
+  const fetchData = async () => {
+    setLoading(true)
+    const { data: petugasData, error: petugasError } = await supabase
+      .from('petugas')
+      .select('*')
+      .eq('is_active', true)
+      .order('nama')
+
+    const { data: jadwalData, error: jadwalError } = await supabase
+      .from('jadwal')
+      .select('*')
+      .order('nama_sholat')
+
+    if (petugasError) console.error('Error fetching petugas:', petugasError)
+    if (jadwalError) console.error('Error fetching jadwal:', jadwalError)
+
+    setPetugas(petugasData || [])
+    setJadwal(jadwalData || [])
+    setLoading(false)
+  }
+
+  const fetchPresensi = async () => {
+    const jadwalItem = jadwal.find((j) => j.nama_sholat === selectedPrayer)
+    if (!jadwalItem) return
+
+    const { data, error } = await supabase
+      .from('presensi')
+      .select('*')
+      .eq('jadwal_id', jadwalItem.id)
+      .eq('tanggal', selectedDate)
+
+    if (error) {
+      console.error('Error fetching presensi:', error)
+      return
+    }
+
+    const map = {}
+    data.forEach((p) => {
+      map[p.petugas_id] = p
+    })
+    setPresensiMap(map)
+  }
+
+  const officers = useMemo(() => {
+    return petugas.map((p) => {
+      const existing = presensiMap[p.id]
+      return {
+        ...p,
+        id: p.id,
+        status: existing?.status || 'hadir',
+        substitute: existing?.petugas_pengganti_nama || '',
+        petugas_pengganti_nama: existing?.petugas_pengganti_nama || '',
+      }
+    })
+  }, [petugas, presensiMap])
 
   const stats = useMemo(() => {
     const hadir = officers.filter((o) => o.status === 'hadir').length
@@ -152,17 +231,72 @@ export default function AttendancePage() {
   }, [officers])
 
   const handleStatusChange = (id, status) => {
-    setOfficers((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status, substitute: '' } : o))
-    )
+    setPresensiMap((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        petugas_id: id,
+        status,
+        petugas_pengganti_nama: status === 'izin' ? prev[id]?.petugas_pengganti_nama || '' : '',
+      },
+    }))
   }
 
   const handleSubstituteChange = (id, substitute) => {
-    setOfficers((prev) => prev.map((o) => (o.id === id ? { ...o, substitute } : o)))
+    setPresensiMap((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        petugas_id: id,
+        petugas_pengganti_nama: substitute,
+      },
+    }))
   }
 
-  const handleSave = () => {
-    alert(`Absensi ${selectedPrayer} berhasil disimpan!`)
+  const handleSave = async () => {
+    const jadwalItem = jadwal.find((j) => j.nama_sholat === selectedPrayer)
+    if (!jadwalItem) return
+
+    setSaving(true)
+    const promises = officers.map((officer) => {
+      const existing = presensiMap[officer.id]
+      const data = {
+        petugas_id: officer.id,
+        jadwal_id: jadwalItem.id,
+        tanggal: selectedDate,
+        status: officer.status,
+        petugas_pengganti_nama: officer.status === 'izin' ? officer.petugas_pengganti_nama : null,
+      }
+
+      if (existing?.id) {
+        return supabase.from('presensi').update(data).eq('id', existing.id)
+      } else {
+        return supabase.from('presensi').insert(data)
+      }
+    })
+
+    try {
+      const results = await Promise.all(promises)
+      const hasError = results.some((r) => r.error)
+      if (hasError) {
+        alert('Gagal menyimpan beberapa data presensi')
+      } else {
+        alert(`Absensi ${selectedPrayer} berhasil disimpan!`)
+        fetchPresensi()
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan saat menyimpan')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-stack-lg flex items-center justify-center min-h-[300px]">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
   }
 
   return (
@@ -209,12 +343,13 @@ export default function AttendancePage() {
         <div className="p-6 border-t border-outline-variant bg-surface-bright flex justify-end">
           <button
             onClick={handleSave}
-            className="bg-primary-container hover:opacity-90 text-white px-6 py-2.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm flex items-center gap-2 transition-all active:scale-95"
+            disabled={saving}
+            className="bg-primary-container hover:opacity-90 text-white px-6 py-2.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
           >
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
               save
             </span>
-            Simpan Absensi
+            {saving ? 'Menyimpan...' : 'Simpan Absensi'}
           </button>
         </div>
       </div>
