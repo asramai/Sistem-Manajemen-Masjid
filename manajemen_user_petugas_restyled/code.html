@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manajemen Pengguna &amp; Petugas - Sistem Manajemen Masjid</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "error": "#ba1a1a",
+                "surface-container-lowest": "#ffffff",
+                "on-tertiary": "#ffffff",
+                "error-container": "#ffdad6",
+                "on-error-container": "#93000a",
+                "secondary-fixed-dim": "#e9c400",
+                "surface-bright": "#f9f9f9",
+                "inverse-surface": "#2f3131",
+                "secondary-fixed": "#ffe16d",
+                "outline": "#8c7071",
+                "surface-container-highest": "#e2e2e2",
+                "on-tertiary-fixed-variant": "#474836",
+                "on-primary-fixed-variant": "#8e0f28",
+                "on-secondary-container": "#6e5c00",
+                "on-primary-container": "#ff828a",
+                "surface-container-low": "#f3f3f4",
+                "surface-variant": "#e2e2e2",
+                "background": "#f9f9f9",
+                "inverse-primary": "#ffb3b5",
+                "on-surface": "#1a1c1c",
+                "on-primary": "#ffffff",
+                "surface-container": "#eeeeee",
+                "primary-fixed-dim": "#ffb3b5",
+                "on-tertiary-fixed": "#1b1d0e",
+                "on-surface-variant": "#584141",
+                "surface": "#f9f9f9",
+                "on-secondary-fixed-variant": "#544600",
+                "tertiary-fixed-dim": "#c8c8b0",
+                "primary-container": "#800020",
+                "on-primary-fixed": "#40000b",
+                "surface-tint": "#af2b3e",
+                "primary-fixed": "#ffdada",
+                "on-secondary": "#ffffff",
+                "tertiary-container": "#3d3f2d",
+                "secondary-container": "#fcd400",
+                "secondary": "#705d00",
+                "outline-variant": "#e0bfbf",
+                "primary": "#570013",
+                "surface-dim": "#dadada",
+                "surface-container-high": "#e8e8e8",
+                "tertiary-fixed": "#e4e4cc",
+                "tertiary": "#272919",
+                "on-secondary-fixed": "#221b00",
+                "on-background": "#1a1c1c",
+                "on-tertiary-container": "#a9aa94",
+                "inverse-on-surface": "#f0f1f1",
+                "on-error": "#ffffff"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "sm": "12px",
+                "container-max": "1280px",
+                "md": "24px",
+                "gutter": "24px",
+                "base": "8px",
+                "lg": "48px",
+                "xl": "80px",
+                "xs": "4px",
+                "margin-mobile": "1rem"
+        },
+        "fontFamily": {
+                "body-lg": [
+                        "Work Sans"
+                ],
+                "headline-lg-mobile": [
+                        "Manrope"
+                ],
+                "headline-lg": [
+                        "Manrope"
+                ],
+                "title-md": [
+                        "Manrope"
+                ],
+                "label-md": [
+                        "Work Sans"
+                ],
+                "body-md": [
+                        "Work Sans"
+                ],
+                "display-lg": [
+                        "Manrope"
+                ],
+                "h1": ["Manrope"],
+                "h2": ["Manrope"],
+                "h3": ["Manrope"],
+                "label-sm": ["Work Sans"],
+                "body-sm": ["Work Sans"]
+        },
+        "fontSize": {
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "title-md": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "label-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+        }
+},
+    },
+  }
+</script>
+<style>
+        body { font-family: 'Work Sans', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Manrope', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen pb-24 md:pb-0 font-body-md">
+<!-- TopAppBar -->
+<header class="bg-primary dark:bg-primary-container text-on-primary dark:text-on-primary-container font-h2 text-h2 sticky top-0 full-width shadow-sm flex justify-between items-center px-margin-mobile py-4 w-full z-40">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden">
+<img alt="Masjid Logo" class="w-full h-full object-cover p-1" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL29A0yNh4ryFwtFBorD1WELoxwGI3K5WEWJWH0h5X73d_n9KWYLKAqXO2znynuH8xEXrmLEHvL8Wb5Nlfo5bbf2HAt5_rbYhVLBIuxVVjlVZ-zw6U635m_T6S0p8y2LMD2baTs2AviZkn65QS5oIE486H5GF9C9PPGYVd-C_Vi7QpbPV90b3gslcPmTEAnmIFqAtuU85S6sxFnfXYkNrY6E79h9D2Aa_vjf9KTiYs-ihzlS5JGYgB-Uff8eTmxO-tQqE"/>
+</div>
+<span class="font-h2 text-h2 font-semibold text-on-primary">Sistem Manajemen Masjid</span>
+</div>
+<div class="hidden md:flex gap-6 items-center">
+<!-- Desktop Nav (Mirroring Bottom Nav + Active State) -->
+<a class="text-on-primary/80 hover:bg-primary-container/20 transition-colors duration-200 px-3 py-2 rounded-lg flex items-center gap-2" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md">Beranda</span>
+</a>
+<a class="text-on-primary/80 hover:bg-primary-container/20 transition-colors duration-200 px-3 py-2 rounded-lg flex items-center gap-2" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Presensi</span>
+</a>
+<a class="text-on-primary/80 hover:bg-primary-container/20 transition-colors duration-200 px-3 py-2 rounded-lg flex items-center gap-2" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-md text-label-md">Laporan</span>
+</a>
+<a class="text-on-primary font-bold hover:bg-primary-container/20 transition-colors duration-200 px-3 py-2 rounded-lg flex items-center gap-2" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md">Profil</span>
+</a>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-gutter pt-8 pb-12">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+<div>
+<h1 class="font-h1 text-h1 text-on-surface mb-2">Manajemen Pengguna &amp; Petugas</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Kelola peran, status, dan data detail petugas Masjid Pohuwato.</p>
+</div>
+<button class="bg-primary text-on-primary hover:bg-primary-container transition-colors duration-200 px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:shadow-md">
+<span class="material-symbols-outlined">add</span>
+                Tambah Petugas Baru
+            </button>
+</div>
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+<!-- Filters & Search (Left Column on Desktop) -->
+<div class="lg:col-span-1 space-y-6">
+<!-- Search Card -->
+<div class="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6">
+<h3 class="font-h3 text-h3 mb-4">Cari Petugas</h3>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md bg-surface-bright" placeholder="Nama atau ID..." type="text"/>
+</div>
+</div>
+<!-- Filter Card -->
+<div class="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6">
+<h3 class="font-h3 text-h3 mb-4">Filter Peran</h3>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="rounded border-outline-variant text-primary-container focus:ring-primary-container" type="checkbox"/>
+<span class="font-body-md text-body-md group-hover:text-primary transition-colors">Semua Peran</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary-container focus:ring-primary-container" type="checkbox"/>
+<span class="font-body-md text-body-md group-hover:text-primary transition-colors">Super Admin</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary-container focus:ring-primary-container" type="checkbox"/>
+<span class="font-body-md text-body-md group-hover:text-primary transition-colors">Admin</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary-container focus:ring-primary-container" type="checkbox"/>
+<span class="font-body-md text-body-md group-hover:text-primary transition-colors">Takmir</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary-container focus:ring-primary-container" type="checkbox"/>
+<span class="font-body-md text-body-md group-hover:text-primary transition-colors">Petugas (Imam/Muadzin)</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Users List (Right Column on Desktop) -->
+<div class="lg:col-span-3 space-y-4">
+<!-- User Card 1: Super Admin -->
+<div class="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 hover:bg-surface-container-low transition-colors duration-200">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest overflow-hidden shrink-0 border-2 border-primary/10">
+<img class="w-full h-full object-cover" data-alt="A portrait of a distinguished Indonesian man in his 50s wearing a peci and neat koko shirt, representing a senior mosque administrator. The lighting is soft and natural, evoking respect and authority in a well-lit modern mosque office setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIC1F3zJr2JHFa-yOjWTL1dtXTXUzs8F8b5ghbYd3zU1-0Upw3Y0HhBtWxHNLHuLMM3lBWSbP9KcTGdiqqB50x-fjbZvymsZZcAwAYj8kWiwtK8TXYVReL84LAgLuGhIYLxH2In3d2Gvdb3Y5fq9grxQLhyXHLtUDdOdeLI_toIKLPFwZ1R6eS4cpOPcYrVrZgSHEjNTmgeyOet8QR1RNcRAt9GQbDrTrVLKcvDwqjY4-00ecQ09ddOg"/>
+</div>
+<div>
+<h4 class="font-h3 text-h3 text-on-surface">Ust. H. Abdul Rahman</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-primary text-on-primary px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase tracking-wider font-bold">Super Admin</span>
+<span class="text-outline text-label-sm font-label-sm">• +62 812-3456-7890</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 sm:ml-auto">
+<select class="border border-outline-variant rounded-lg py-1.5 px-3 font-body-sm text-body-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+<option selected="">Super Admin</option>
+<option>Admin</option>
+<option>Takmir</option>
+</select>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high hover:text-primary rounded-lg transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-error-container hover:text-error rounded-lg transition-colors" title="Hapus">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- User Card 2: Petugas (Imam) -->
+<div class="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 hover:bg-surface-container-low transition-colors duration-200">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+<div class="flex items-start gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest overflow-hidden shrink-0 mt-1 border-2 border-secondary/10">
+<div class="w-full h-full flex items-center justify-center text-secondary font-h3">IF</div>
+</div>
+<div>
+<h4 class="font-h3 text-h3 text-on-surface">Ibrahim Fadillah</h4>
+<div class="flex items-center gap-2 mt-1 mb-3">
+<span class="bg-secondary text-on-secondary px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase tracking-wider font-bold">Petugas</span>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-md font-label-sm text-[10px]">Imam Utama</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-body-sm font-body-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">call</span> +62 821-9876-5432
+                                    </div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">event_available</span> Kehadiran Bulan Ini: 95%
+                                    </div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 sm:ml-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-outline-variant">
+<button class="text-primary-container font-label-md text-label-md hover:underline px-2 py-1">Lihat Detail</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high hover:text-primary rounded-lg transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+</div>
+</div>
+</div>
+<!-- User Card 3: Takmir -->
+<div class="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 hover:bg-surface-container-low transition-colors duration-200">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest overflow-hidden shrink-0 border-2 border-primary/10">
+<img class="w-full h-full object-cover" data-alt="A portrait of a young Indonesian man in his late 20s, smiling warmly, wearing a clean white shirt, representing a mosque committee member (Takmir). The background is slightly blurred showing mosque architecture details. Bright, optimistic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPOph5RjbWMf5Q_qFpB_Gwvst43jO2tUa8hrbxY9t3zLz5vXMgV5DvrO5q6cTgcaddUUrROhRQTOjcqenQ4yOQawXIS5HEMJPIaghBMp7EEsSoJQDB4_-Gl5eFmZ7i7Q3K8epQ4L03WFFXHz1Zwahhzcm21ZrW3poIXC_Qaee3xhfWGO1YJP5pFJle2BubPJKPkdAKQBhwe5M3rFXnisLVQaZI3DZlDHFN1Zh8oW8mm1RAAKbc1sLwVg"/>
+</div>
+<div>
+<h4 class="font-h3 text-h3 text-on-surface">Budi Santoso</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-secondary-fixed text-on-secondary-fixed px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase tracking-wider font-bold">Takmir</span>
+<span class="text-outline text-label-sm font-label-sm">• +62 853-1122-3344</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 sm:ml-auto">
+<select class="border border-outline-variant rounded-lg py-1.5 px-3 font-body-sm text-body-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+<option>Super Admin</option>
+<option>Admin</option>
+<option selected="">Takmir</option>
+</select>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high hover:text-primary rounded-lg transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-error-container hover:text-error rounded-lg transition-colors" title="Hapus">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-surface border-t border-outline-variant shadow-lg md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-transform px-4 py-1 rounded-xl" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm mt-1">Beranda</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-transform px-4 py-1 rounded-xl" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-sm text-label-sm mt-1">Presensi</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-transform px-4 py-1 rounded-xl" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-sm text-label-sm mt-1">Laporan</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-4 py-1 active:scale-95 transition-transform shadow-sm" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profil</span>
+</a>
+</nav>
+</body></html>
