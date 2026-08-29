@@ -174,25 +174,23 @@ function PetugasModal({ isOpen, petugas, onClose, onSuccess }) {
 
     try {
       let userId = petugas?.id
+      let authError = null
 
       if (!petugas?.id && form.email && form.password) {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email: form.email,
           password: form.password,
         })
 
-        if (authError) throw authError
+        if (error) {
+          authError = error
+        } else {
+          userId = form.email
+        }
+      }
 
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: authData.user.id,
-          nama: form.nama,
-          role: 'petugas',
-          phone: form.phone || null,
-        })
-
-        if (profileError) throw profileError
-
-        userId = authData.user.id
+      if (!userId) {
+        userId = crypto.randomUUID()
       }
 
       const data = {
@@ -220,11 +218,15 @@ function PetugasModal({ isOpen, petugas, onClose, onSuccess }) {
       if (error) {
         setMessage('Gagal menyimpan: ' + error.message)
       } else {
-        setMessage('Berhasil disimpan!')
+        if (authError) {
+          setMessage('Petugas berhasil disimpan, tapi akun login gagal dibuat: ' + authError.message + '. Anda bisa buat akun manual di Supabase Dashboard > Authentication > Users.')
+        } else {
+          setMessage('Berhasil disimpan!')
+        }
         onSuccess?.(result?.[0])
         setTimeout(() => {
           onClose()
-        }, 600)
+        }, 1500)
       }
     } catch (err) {
       setMessage('Gagal: ' + (err.message || err))
@@ -262,7 +264,7 @@ function PetugasModal({ isOpen, petugas, onClose, onSuccess }) {
           </div>
 
           <div className="flex flex-col gap-xs">
-            <label className="font-label-md text-label-md text-on-surface" htmlFor="email">Email (untuk akun login)</label>
+            <label className="font-label-md text-label-md text-on-surface" htmlFor="email">Email (opsional - untuk akun login petugas)</label>
             <input
               className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
               id="email"
@@ -271,12 +273,11 @@ function PetugasModal({ isOpen, petugas, onClose, onSuccess }) {
               type="email"
               value={form.email}
               onChange={handleChange}
-              disabled={!!petugas}
             />
-            {petugas && <p className="text-xs text-on-surface-variant">Email tidak dapat diubah untuk petugas yang sudah ada.</p>}
+            <p className="text-xs text-on-surface-variant">Kosongkan jika tidak ingin membuat akun login sekarang. Akun bisa dibuat manual nanti.</p>
           </div>
 
-          {!petugas && (
+          {!petugas && form.email && (
             <div className="flex flex-col gap-xs">
               <label className="font-label-md text-label-md text-on-surface" htmlFor="password">Password Akun</label>
               <input
@@ -284,11 +285,11 @@ function PetugasModal({ isOpen, petugas, onClose, onSuccess }) {
                 id="password"
                 name="password"
                 placeholder="Password untuk login petugas"
-                required
                 type="text"
                 value={form.password}
                 onChange={handleChange}
               />
+              <p className="text-xs text-on-surface-variant">Isi hanya jika email diisi dan ingin membuat akun login sekarang.</p>
             </div>
           )}
 
