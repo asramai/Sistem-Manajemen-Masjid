@@ -258,6 +258,22 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  const roles = ['super_admin', 'admin', 'takmir', 'petugas']
+
+  const roleBadgeClass = {
+    'super_admin': 'bg-primary text-on-primary',
+    'admin': 'bg-primary-container text-on-primary-container',
+    'takmir': 'bg-secondary-fixed text-on-secondary-fixed',
+    'petugas': 'bg-secondary-container text-on-secondary-container',
+  }
+
+  const roleLabel = {
+    'super_admin': 'Super Admin',
+    'admin': 'Admin',
+    'takmir': 'Takmir',
+    'petugas': 'Petugas',
+  }
+
   useEffect(() => {
     fetchData()
   }, [])
