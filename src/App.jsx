@@ -7,7 +7,7 @@ import LoginPage from './pages/LoginPage'
 import UserManagement from './pages/UserManagement'
 import RekapKehadiranSaya from './pages/RekapKehadiranSaya'
 
-function TopAppBar({ currentPath }) {
+function TopAppBar({ currentPath, onLogout }) {
   const isLaporan = currentPath === '/laporan'
   const isProfil = currentPath === '/profil'
   const headerClass = isLaporan || isProfil ? 'bg-primary dark:bg-primary-container' : 'bg-primary-container dark:bg-primary-container'
@@ -48,12 +48,20 @@ function TopAppBar({ currentPath }) {
             <span className="font-label-md text-label-md">{item.label}</span>
           </a>
         ))}
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-on-primary/80 hover:bg-primary-container/20 transition-colors duration-200"
+          title="Logout"
+        >
+          <span className="material-symbols-outlined">logout</span>
+          <span className="font-label-md text-label-md">Logout</span>
+        </button>
       </div>
     </header>
   )
 }
 
-function BottomNav({ currentPath }) {
+function BottomNav({ currentPath, onLogout }) {
   const navigate = useNavigate()
   const navItems = [
     { label: 'Beranda', icon: 'home', path: '/' },
@@ -80,14 +88,59 @@ function BottomNav({ currentPath }) {
           <span className="font-label-sm text-label-sm mt-1">{item.label}</span>
         </button>
       ))}
+      <button
+        onClick={onLogout}
+        className="flex flex-col items-center justify-center px-4 py-1 rounded-xl active:scale-95 transition-transform text-on-surface-variant hover:bg-surface-container-high"
+        title="Logout"
+      >
+        <span className="material-symbols-outlined">logout</span>
+        <span className="font-label-sm text-label-sm mt-1">Logout</span>
+      </button>
     </nav>
+  )
+}
+
+function IdleWarningModal({ remainingSeconds, onStay, onLogout }) {
+  const minutes = Math.ceil(remainingSeconds / 1000)
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+      <div className="relative bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant w-full max-w-sm p-6">
+        <div className="flex flex-col items-center text-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+            <span className="material-symbols-outlined text-[24px]">timer</span>
+          </div>
+          <div>
+            <h3 className="font-h3 text-h3 text-on-surface mb-1">Sesi Akan Berakhir</h3>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">
+              Anda akan logout otomatis dalam <strong>{minutes}</strong> detik karena tidak ada aktivitas.
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={onLogout}
+            className="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-colors font-body-md"
+          >
+            Logout
+          </button>
+          <button
+            onClick={onStay}
+            className="px-6 py-2 rounded-lg bg-primary text-on-primary hover:bg-primary-container transition-colors font-label-md font-semibold"
+          >
+            Tetap Login
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
 export default function App() {
   const location = useLocation()
   const currentPath = location.pathname
-  const { session, loading } = useAuth()
+  const { session, loading, signOut, showWarning, resetIdle } = useAuth()
   const navigate = useNavigate()
 
   if (loading) {
@@ -109,9 +162,14 @@ export default function App() {
     return <Navigate to="/" replace />
   }
 
+  const handleLogout = async () => {
+    await signOut()
+    navigate('/login')
+  }
+
   return (
     <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col pb-24 md:pb-0">
-      {session && <TopAppBar currentPath={currentPath} />}
+      {session && <TopAppBar currentPath={currentPath} onLogout={handleLogout} />}
       <main className="flex-grow">
         {currentPath === '/login' && <LoginPage />}
         {currentPath === '/laporan' && <LaporanGaji />}
@@ -120,7 +178,14 @@ export default function App() {
         {currentPath === '/rekap' && <RekapKehadiranSaya />}
         {currentPath === '/' && <AttendancePage />}
       </main>
-      {session && <BottomNav currentPath={currentPath} />}
+      {session && <BottomNav currentPath={currentPath} onLogout={handleLogout} />}
+      {showWarning && (
+        <IdleWarningModal
+          remainingSeconds={IDLE_TIMEOUT}
+          onStay={resetIdle}
+          onLogout={handleLogout}
+        />
+      )}
     </div>
   )
 }

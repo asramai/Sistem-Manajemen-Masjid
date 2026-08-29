@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 const petugasRoles = ['imam', 'muadzin', 'bilal', 'marbot']
 const honorTypes = ['per_hadir', 'bulanan']
@@ -425,6 +426,7 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, title, subtitle }) {
 }
 
 export default function UserManagement() {
+  const { signOut } = useAuth()
   const [users, setUsers] = useState([])
   const [petugasList, setPetugasList] = useState([])
   const [search, setSearch] = useState('')
@@ -532,13 +534,22 @@ export default function UserManagement() {
           <h1 className="font-h1 text-h1 text-on-surface mb-2">Manajemen Pengguna &amp; Petugas</h1>
           <p className="font-body-md text-body-md text-on-surface-variant">Kelola peran, status, dan data detail petugas Masjid Pohuwato.</p>
         </div>
-        <button
-          onClick={openAdd}
-          className="bg-primary text-on-primary hover:bg-primary-container transition-colors duration-200 px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:shadow-md"
-        >
-          <span className="material-symbols-outlined">add</span>
-          Tambah Petugas Baru
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => signOut()}
+            className="bg-error text-on-error hover:opacity-90 transition-colors duration-200 px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm"
+          >
+            <span className="material-symbols-outlined">logout</span>
+            Logout
+          </button>
+          <button
+            onClick={openAdd}
+            className="bg-primary text-on-primary hover:bg-primary-container transition-colors duration-200 px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:shadow-md"
+          >
+            <span className="material-symbols-outlined">add</span>
+            Tambah Petugas Baru
+          </button>
+        </div>
       </div>
 
       {/* Dashboard Grid */}

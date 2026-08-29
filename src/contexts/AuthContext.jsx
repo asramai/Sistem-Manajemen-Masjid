@@ -1,12 +1,22 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
+
+const IDLE_TIMEOUT = 5 * 60 * 1000
+const WARNING_BEFORE = 30 * 1000
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [idleTime, setIdleTime] = useState(0)
+  const [showWarning, setShowWarning] = useState(false)
+
+  const resetIdle = useCallback(() => {
+    setIdleTime(0)
+    setShowWarning(false)
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -30,6 +40,33 @@ export function AuthProvider({ children }) {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!session) return
+
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+    const handleActivity = () => resetIdle()
+
+    events.forEach((event) => window.addEventListener(event, handleActivity))
+    
+    const interval = setInterval(() => {
+      setIdleTime((prev) => {
+        const newTime = prev + 1000
+        if (newTime >= IDLE_TIMEOUT - WARNING_BEFORE && newTime < IDLE_TIMEOUT) {
+          setShowWarning(true)
+        }
+        if (newTime >= IDLE_TIMEOUT) {
+          signOut()
+        }
+        return newTime
+      })
+    }, 1000)
+
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, handleActivity))
+      clearInterval(interval)
+    }
+  }, [session, resetIdle])
 
   const fetchProfile = async (userId) => {
     const { data, error } = await supabase
@@ -72,6 +109,9 @@ export function AuthProvider({ children }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
     setProfile(null)
+    setSession(null)
+    setShowWarning(false)
+    setIdleTime(0)
     return { error }
   }
 
@@ -82,6 +122,9 @@ export function AuthProvider({ children }) {
     signIn,
     signUp,
     signOut,
+    idleTime,
+    showWarning,
+    resetIdle,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
