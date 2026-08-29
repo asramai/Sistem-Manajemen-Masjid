@@ -29,10 +29,15 @@ export default function RekapKehadiranSaya() {
     const { data: petugasData } = await supabase
       .from('petugas')
       .select('*')
-      .eq('id', session.user.id)
+      .eq('auth_user_id', session.user.id)
       .single()
 
     setPetugas(petugasData)
+
+    if (!petugasData) {
+      setLoading(false)
+      return
+    }
 
     const [month, year] = selectedMonth.split(' ')
     const yearNum = parseInt(year)
@@ -44,7 +49,7 @@ export default function RekapKehadiranSaya() {
     const { data: presensiData } = await supabase
       .from('presensi')
       .select('*, jadwal:nama_sholat')
-      .eq('petugas_id', session.user.id)
+      .eq('petugas_id', petugasData.id)
       .gte('tanggal', startDate)
       .lt('tanggal', endDate)
       .order('tanggal', { ascending: false })

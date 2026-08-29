@@ -7,20 +7,37 @@ import LoginPage from './pages/LoginPage'
 import UserManagement from './pages/UserManagement'
 import RekapKehadiranSaya from './pages/RekapKehadiranSaya'
 import BiayaTransport from './pages/BiayaTransport'
+import JadwalPerBulan from './pages/JadwalPerBulan'
+import JadwalSaya from './pages/JadwalSaya'
+import KonfirmasiIzin from './pages/KonfirmasiIzin'
+import BuatAkunPetugas from './pages/BuatAkunPetugas'
 
-function TopAppBar({ currentPath, onLogout }) {
+function TopAppBar({ currentPath, onLogout, profile }) {
   const isLaporan = currentPath === '/laporan'
   const isProfil = currentPath === '/profil'
   const isBiaya = currentPath === '/biaya-transport'
-  const headerClass = isLaporan || isProfil || isBiaya ? 'bg-primary dark:bg-primary-container' : 'bg-primary-container dark:bg-primary-container'
+  const isJadwal = currentPath === '/jadwal' || currentPath === '/buat-akun'
+  const headerClass = isLaporan || isProfil || isBiaya || isJadwal ? 'bg-primary dark:bg-primary-container' : 'bg-primary-container dark:bg-primary-container'
 
-  const navItems = [
-    { label: 'Beranda', icon: 'home', path: '/' },
-    { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
-    { label: 'Laporan', icon: 'description', path: '/laporan' },
-    { label: 'Profil', icon: 'person', path: '/profil' },
-    { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
-  ]
+  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+
+  const navItems = isAdmin
+    ? [
+        { label: 'Beranda', icon: 'home', path: '/' },
+        { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
+        { label: 'Laporan', icon: 'description', path: '/laporan' },
+        { label: 'Profil', icon: 'person', path: '/profil' },
+        { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
+        { label: 'Jadwal', icon: 'calendar_month', path: '/jadwal' },
+        { label: 'Buat Akun', icon: 'person_add', path: '/buat-akun' },
+      ]
+    : [
+        { label: 'Beranda', icon: 'home', path: '/' },
+        { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
+        { label: 'Laporan', icon: 'description', path: '/laporan' },
+        { label: 'Jadwal Saya', icon: 'calendar_today', path: '/jadwal-saya' },
+        { label: 'Izin', icon: 'event_busy', path: '/konfirmasi-izin' },
+      ]
 
   return (
     <header className={`${headerClass} text-on-primary dark:text-on-primary-container font-h2 text-h2 sticky top-0 full-width shadow-sm flex justify-between items-center px-margin-mobile py-4 w-full z-40`}>
@@ -64,15 +81,27 @@ function TopAppBar({ currentPath, onLogout }) {
   )
 }
 
-function BottomNav({ currentPath, onLogout }) {
+function BottomNav({ currentPath, onLogout, profile }) {
   const navigate = useNavigate()
-  const navItems = [
-    { label: 'Beranda', icon: 'home', path: '/' },
-    { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
-    { label: 'Laporan', icon: 'description', path: '/laporan' },
-    { label: 'Profil', icon: 'person', path: '/profil' },
-    { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
-  ]
+  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+
+  const navItems = isAdmin
+    ? [
+        { label: 'Beranda', icon: 'home', path: '/' },
+        { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
+        { label: 'Laporan', icon: 'description', path: '/laporan' },
+        { label: 'Profil', icon: 'person', path: '/profil' },
+        { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
+        { label: 'Jadwal', icon: 'calendar_month', path: '/jadwal' },
+        { label: 'Buat Akun', icon: 'person_add', path: '/buat-akun' },
+      ]
+    : [
+        { label: 'Beranda', icon: 'home', path: '/' },
+        { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
+        { label: 'Laporan', icon: 'description', path: '/laporan' },
+        { label: 'Jadwal Saya', icon: 'calendar_today', path: '/jadwal-saya' },
+        { label: 'Izin', icon: 'event_busy', path: '/konfirmasi-izin' },
+      ]
 
   return (
     <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-surface border-t border-outline-variant shadow-lg md:hidden">
@@ -144,7 +173,7 @@ function IdleWarningModal({ remainingSeconds, onStay, onLogout }) {
 export default function App() {
   const location = useLocation()
   const currentPath = location.pathname
-  const { session, loading, signOut, showWarning, resetIdle } = useAuth()
+  const { session, loading, signOut, showWarning, resetIdle, profile } = useAuth()
   const navigate = useNavigate()
 
   if (loading) {
@@ -173,7 +202,7 @@ export default function App() {
 
   return (
     <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col pb-24 md:pb-0">
-      {session && <TopAppBar currentPath={currentPath} onLogout={handleLogout} />}
+      {session && <TopAppBar currentPath={currentPath} onLogout={handleLogout} profile={profile} />}
       <main className="flex-grow">
         {currentPath === '/login' && <LoginPage />}
         {currentPath === '/laporan' && <LaporanGaji />}
@@ -181,9 +210,13 @@ export default function App() {
         {currentPath === '/profil' && <UserManagement />}
         {currentPath === '/rekap' && <RekapKehadiranSaya />}
         {currentPath === '/biaya-transport' && <BiayaTransport />}
+        {currentPath === '/jadwal' && <JadwalPerBulan />}
+        {currentPath === '/jadwal-saya' && <JadwalSaya />}
+        {currentPath === '/konfirmasi-izin' && <KonfirmasiIzin />}
+        {currentPath === '/buat-akun' && <BuatAkunPetugas />}
         {currentPath === '/' && <AttendancePage />}
       </main>
-      {session && <BottomNav currentPath={currentPath} onLogout={handleLogout} />}
+      {session && <BottomNav currentPath={currentPath} onLogout={handleLogout} profile={profile} />}
       {showWarning && (
         <IdleWarningModal
           remainingSeconds={IDLE_TIMEOUT}
