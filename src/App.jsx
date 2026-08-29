@@ -6,17 +6,20 @@ import LaporanGaji from './pages/LaporanGaji'
 import LoginPage from './pages/LoginPage'
 import UserManagement from './pages/UserManagement'
 import RekapKehadiranSaya from './pages/RekapKehadiranSaya'
+import BiayaTransport from './pages/BiayaTransport'
 
 function TopAppBar({ currentPath, onLogout }) {
   const isLaporan = currentPath === '/laporan'
   const isProfil = currentPath === '/profil'
-  const headerClass = isLaporan || isProfil ? 'bg-primary dark:bg-primary-container' : 'bg-primary-container dark:bg-primary-container'
+  const isBiaya = currentPath === '/biaya-transport'
+  const headerClass = isLaporan || isProfil || isBiaya ? 'bg-primary dark:bg-primary-container' : 'bg-primary-container dark:bg-primary-container'
 
   const navItems = [
     { label: 'Beranda', icon: 'home', path: '/' },
     { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
     { label: 'Laporan', icon: 'description', path: '/laporan' },
     { label: 'Profil', icon: 'person', path: '/profil' },
+    { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
   ]
 
   return (
@@ -68,6 +71,7 @@ function BottomNav({ currentPath, onLogout }) {
     { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
     { label: 'Laporan', icon: 'description', path: '/laporan' },
     { label: 'Profil', icon: 'person', path: '/profil' },
+    { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
   ]
 
   return (
@@ -176,6 +180,7 @@ export default function App() {
         {currentPath === '/presensi' && <AttendancePage />}
         {currentPath === '/profil' && <UserManagement />}
         {currentPath === '/rekap' && <RekapKehadiranSaya />}
+        {currentPath === '/biaya-transport' && <BiayaTransport />}
         {currentPath === '/' && <AttendancePage />}
       </main>
       {session && <BottomNav currentPath={currentPath} onLogout={handleLogout} />}
