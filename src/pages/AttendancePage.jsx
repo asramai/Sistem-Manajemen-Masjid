@@ -70,7 +70,46 @@ export default function AttendancePage() {
       return
     }
 
-    setSavedPresensi(data || [])
+    const enriched = await Promise.all(
+      (data || []).map(async (record) => {
+        const { data: jadwalBulanan } = await supabase
+          .from('jadwal_bulanan')
+          .select('*')
+          .eq('tanggal', record.tanggal)
+          .eq('nama_sholat', selectedPrayer)
+          .maybeSingle()
+
+        let role = null
+        let nama = '-'
+        if (jadwalBulanan) {
+          if (jadwalBulanan.muadzin_utama_id === record.petugas_id) {
+            role = 'Muadzin Utama'
+            nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
+          } else if (jadwalBulanan.muadzin_cadangan_id === record.petugas_id) {
+            role = 'Muadzin Cadangan'
+            nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
+          } else if (jadwalBulanan.imam_utama_id === record.petugas_id) {
+            role = 'Imam Utama'
+            nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
+          } else if (jadwalBulanan.imam_cadangan_id === record.petugas_id) {
+            role = 'Imam Cadangan'
+            nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
+          }
+        }
+
+        const presensiDate = new Date(record.created_at)
+        const presensiTime = presensiDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
+        return {
+          ...record,
+          nama,
+          role,
+          presensiTime,
+        }
+      })
+    )
+
+    setSavedPresensi(enriched)
   }
 
   const fetchData = async () => {
@@ -166,11 +205,23 @@ export default function AttendancePage() {
       return
     }
 
-    const promises = records.map((record) =>
-      supabase.from('presensi').upsert(record, { onConflict: ['petugas_id', 'jadwal_id', 'tanggal'] })
-    )
-
     try {
+      const { error: deleteError } = await supabase
+        .from('presensi')
+        .delete()
+        .eq('jadwal_id', jadwalItem.id)
+        .eq('tanggal', selectedDate)
+
+      if (deleteError) {
+        alert('Gagal menghapus data lama: ' + deleteError.message)
+        setSaving(false)
+        return
+      }
+
+      const promises = records.map((record) =>
+        supabase.from('presensi').upsert(record, { onConflict: ['petugas_id', 'jadwal_id', 'tanggal'] })
+      )
+
       const results = await Promise.all(promises)
       const hasError = results.some((r) => r.error)
       if (hasError) {
@@ -369,22 +420,15 @@ export default function AttendancePage() {
                 </tr>
               </thead>
               <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
-                {savedPresensi.map((record) => {
-                  const muadzin = record.muadzin_utama_id ? petugas.find((p) => p.id === record.muadzin_utama_id)?.nama : '-'
-                  const imam = record.imam_utama_id ? petugas.find((p) => p.id === record.imam_utama_id)?.nama : '-'
-                  const presensiDate = new Date(record.created_at)
-                  const presensiTime = presensiDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-
-                  return (
-                    <tr key={record.id} className="hover:bg-surface-container-low transition-colors">
-                      <td className="p-4">{formatDate(new Date(record.tanggal))}</td>
-                      <td className="p-4">{selectedPrayer}</td>
-                      <td className="p-4">{muadzin}</td>
-                      <td className="p-4">{imam}</td>
-                      <td className="p-4">{presensiTime}</td>
-                    </tr>
-                  )
-                })}
+                {savedPresensi.map((record) => (
+                  <tr key={record.id} className="hover:bg-surface-container-low transition-colors">
+                    <td className="p-4">{formatDate(new Date(record.tanggal))}</td>
+                    <td className="p-4">{selectedPrayer}</td>
+                    <td className="p-4">{record.role?.startsWith('Muadzin') ? record.nama : '-'}</td>
+                    <td className="p-4">{record.role?.startsWith('Imam') ? record.nama : '-'}</td>
+                    <td className="p-4">{record.presensiTime}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
