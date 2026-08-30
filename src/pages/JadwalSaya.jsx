@@ -32,8 +32,20 @@ export default function JadwalSaya() {
       .eq('auth_user_id', session.user.id)
       .single()
 
-    const petugasId = petugasData?.id
+    let petugasId = petugasData?.id
     setPetugasId(petugasId)
+
+    if (!petugasId && profile?.nama) {
+      const { data: petugasByName } = await supabase
+        .from('petugas')
+        .select('id')
+        .ilike('nama', profile.nama)
+        .limit(1)
+        .maybeSingle()
+
+      petugasId = petugasByName?.id
+      setPetugasId(petugasId)
+    }
 
     if (!petugasId) {
       setJadwalList([])

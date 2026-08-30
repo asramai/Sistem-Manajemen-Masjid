@@ -342,35 +342,60 @@ export default function JadwalPerBulan() {
                   Hapus Semua
                 </button>
               </div>
-              <div className="space-y-2">
-                {selectedDates
-                  .sort()
-                  .map((dateStr) => {
-                    const date = new Date(dateStr)
-                    const day = date.getDate()
-                    const month = date.toLocaleString('id-ID', { month: 'short' })
-                    const dayName = date.toLocaleString('id-ID', { weekday: 'long' })
-                    const jadwalDate = jadwalBulanan.filter((j) => j.tanggal === dateStr)
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-outline-variant">
+                      <th rowSpan="2" className="px-4 py-3 font-label-md text-label-md text-on-surface bg-surface-container-high/50">Hari/Tanggal</th>
+                      <th colSpan="2" className="px-4 py-3 font-label-md text-label-md text-on-surface bg-surface-container-high/50 text-center">Waktu Sholat</th>
+                    </tr>
+                    <tr className="border-b border-outline-variant">
+                      <th className="px-4 py-2 font-body-sm text-body-sm text-on-surface-variant bg-surface-container-high/50 text-center">Muadzin</th>
+                      <th className="px-4 py-2 font-body-sm text-body-sm text-on-surface-variant bg-surface-container-high/50 text-center">Imam</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant">
+                    {selectedDates
+                      .sort()
+                      .map((dateStr) => {
+                        const date = new Date(dateStr)
+                        const day = date.getDate()
+                        const month = date.toLocaleString('id-ID', { month: 'short' })
+                        const dayName = date.toLocaleString('id-ID', { weekday: 'long' })
+                        const jadwalDate = jadwalBulanan
+                          .filter((j) => j.tanggal === dateStr)
+                          .sort((a, b) => allSholat.indexOf(a.nama_sholat) - allSholat.indexOf(b.nama_sholat))
 
-                    return (
-                      <div key={dateStr} className="flex items-center justify-between p-3 rounded-lg bg-surface-container-high/50">
-                        <div>
-                          <p className="font-body-md font-semibold text-on-surface">{dayName}, {day} {month}</p>
-                          {jadwalDate.length > 0 && (
-                            <p className="font-body-sm text-body-sm text-on-surface-variant">
-                              {jadwalDate.map((j) => j.nama_sholat).join(', ')}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleDateClick(day)}
-                          className="text-on-surface-variant hover:text-error transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">close</span>
-                        </button>
-                      </div>
-                    )
-                  })}
+                        if (jadwalDate.length === 0) {
+                          return (
+                            <tr key={dateStr}>
+                              <td className="px-4 py-3 font-body-md text-on-surface">{dayName}, {day} {month}</td>
+                              <td colSpan="2" className="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant text-center">Belum ada jadwal</td>
+                            </tr>
+                          )
+                        }
+
+                        return jadwalDate.map((jadwal, idx) => (
+                          <tr key={jadwal.id || `${dateStr}-${idx}`} className="hover:bg-surface-container-low/50 transition-colors">
+                            {idx === 0 && (
+                              <td rowSpan={jadwalDate.length} className="px-4 py-3 font-body-md font-semibold text-on-surface align-top">
+                                {dayName}, {day} {month}
+                              </td>
+                            )}
+                            <td className="px-4 py-3 font-body-md text-on-surface text-center">{jadwal.nama_sholat}</td>
+                            <td className="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant text-center">
+                              {petugasList.find((p) => p.id === jadwal.muadzin_utama_id)?.nama || '-'}
+                              {jadwal.muadzin_cadangan_id && ` / ${petugasList.find((p) => p.id === jadwal.muadzin_cadangan_id)?.nama}`}
+                            </td>
+                            <td className="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant text-center">
+                              {petugasList.find((p) => p.id === jadwal.imam_utama_id)?.nama || '-'}
+                              {jadwal.imam_cadangan_id && ` / ${petugasList.find((p) => p.id === jadwal.imam_cadangan_id)?.nama}`}
+                            </td>
+                          </tr>
+                        ))
+                      })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
