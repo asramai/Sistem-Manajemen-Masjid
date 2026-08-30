@@ -10,6 +10,7 @@ export default function JadwalSaya() {
   const [loading, setLoading] = useState(true)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
+  const [petugasId, setPetugasId] = useState(null)
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -25,6 +26,21 @@ export default function JadwalSaya() {
     const nextMonth = selectedMonth + 2
     const endDate = `${selectedYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
 
+    const { data: petugasData } = await supabase
+      .from('petugas')
+      .select('id')
+      .eq('auth_user_id', session.user.id)
+      .single()
+
+    const petugasId = petugasData?.id
+    setPetugasId(petugasId)
+
+    if (!petugasId) {
+      setJadwalList([])
+      setLoading(false)
+      return
+    }
+
     const { data } = await supabase
       .from('jadwal_bulanan')
       .select('*')
@@ -35,22 +51,22 @@ export default function JadwalSaya() {
     if (data) {
       const filtered = data.filter(
         (j) =>
-          j.imam_utama_id === session.user.id ||
-          j.imam_cadangan_id === session.user.id ||
-          j.muadzin_utama_id === session.user.id ||
-          j.muadzin_cadangan_id === session.user.id
+          j.imam_utama_id === petugasId ||
+          j.imam_cadangan_id === petugasId ||
+          j.muadzin_utama_id === petugasId ||
+          j.muadzin_cadangan_id === petugasId
       )
       setJadwalList(filtered)
     }
     setLoading(false)
   }
 
-  const getRoleLabel = (record) => {
+  const getRoleLabel = (record, petugasId) => {
     const roles = []
-    if (record.imam_utama_id === session?.user?.id) roles.push('Imam Utama')
-    if (record.imam_cadangan_id === session?.user?.id) roles.push('Imam Cadangan')
-    if (record.muadzin_utama_id === session?.user?.id) roles.push('Muadzin Utama')
-    if (record.muadzin_cadangan_id === session?.user?.id) roles.push('Muadzin Cadangan')
+    if (record.imam_utama_id === petugasId) roles.push('Imam Utama')
+    if (record.imam_cadangan_id === petugasId) roles.push('Imam Cadangan')
+    if (record.muadzin_utama_id === petugasId) roles.push('Muadzin Utama')
+    if (record.muadzin_cadangan_id === petugasId) roles.push('Muadzin Cadangan')
     return roles.join(', ')
   }
 
@@ -118,7 +134,7 @@ export default function JadwalSaya() {
                       <p className="font-body-md font-semibold text-on-surface">{jadwal.nama_sholat}</p>
                       <p className="font-body-sm text-body-sm text-on-surface-variant">{dayName}</p>
                       <p className="font-body-sm text-body-sm text-primary mt-1">
-                        {getRoleLabel(jadwal)}
+                        {getRoleLabel(jadwal, petugasId)}
                       </p>
                     </div>
                   </div>
