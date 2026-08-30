@@ -1,16 +1,16 @@
--- Tabel Biaya Transport per Petugas per Sholat
+-- Tabel Biaya Transport per Role per Sholat
 CREATE TABLE IF NOT EXISTS public.biaya_transport (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  petugas_id UUID REFERENCES public.petugas(id) ON DELETE CASCADE NOT NULL,
   nama_sholat TEXT NOT NULL,
+  peran TEXT NOT NULL CHECK (peran IN ('imam', 'muadzin')),
   nominal NUMERIC NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  UNIQUE(petugas_id, nama_sholat)
+  UNIQUE(nama_sholat, peran)
 );
 
 -- Index untuk performa
-CREATE INDEX IF NOT EXISTS idx_biaya_transport_petugas ON public.biaya_transport(petugas_id);
+CREATE INDEX IF NOT EXISTS idx_biaya_transport_sholat_peran ON public.biaya_transport(nama_sholat, peran);
 
 -- RLS
 ALTER TABLE public.biaya_transport ENABLE ROW LEVEL SECURITY;
@@ -33,24 +33,16 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER set_updated_at_biaya_transport BEFORE UPDATE ON public.biaya_transport FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Seed data contoh
-INSERT INTO public.biaya_transport (petugas_id, nama_sholat, nominal)
-SELECT p.id, 'Subuh', 10000 FROM public.petugas p WHERE p.role = 'imam'
-UNION ALL
-SELECT p.id, 'Dzuhur', 15000 FROM public.petugas p WHERE p.role = 'imam'
-UNION ALL
-SELECT p.id, 'Ashar', 10000 FROM public.petugas p WHERE p.role = 'imam'
-UNION ALL
-SELECT p.id, 'Maghrib', 20000 FROM public.petugas p WHERE p.role = 'imam'
-UNION ALL
-SELECT p.id, 'Isya', 10000 FROM public.petugas p WHERE p.role = 'imam'
-UNION ALL
-SELECT p.id, 'Subuh', 5000 FROM public.petugas p WHERE p.role = 'muadzin'
-UNION ALL
-SELECT p.id, 'Dzuhur', 8000 FROM public.petugas p WHERE p.role = 'muadzin'
-UNION ALL
-SELECT p.id, 'Ashar', 5000 FROM public.petugas p WHERE p.role = 'muadzin'
-UNION ALL
-SELECT p.id, 'Maghrib', 10000 FROM public.petugas p WHERE p.role = 'muadzin'
-UNION ALL
-SELECT p.id, 'Isya', 5000 FROM public.petugas p WHERE p.role = 'muadzin'
-ON CONFLICT DO NOTHING;
+INSERT INTO public.biaya_transport (nama_sholat, peran, nominal) VALUES
+  ('Subuh', 'imam', 27000),
+  ('Dzuhur', 'imam', 27000),
+  ('Ashar', 'imam', 27000),
+  ('Maghrib', 'imam', 27000),
+  ('Isya', 'imam', 27000),
+  ('Jumat', 'imam', 27000),
+  ('Subuh', 'muadzin', 21000),
+  ('Dzuhur', 'muadzin', 21000),
+  ('Ashar', 'muadzin', 21000),
+  ('Maghrib', 'muadzin', 21000),
+  ('Isya', 'muadzin', 21000)
+ON CONFLICT (nama_sholat, peran) DO NOTHING;

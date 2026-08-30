@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya']
+const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya', 'Jumat']
+const roles = ['imam', 'muadzin']
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('id-ID', {
@@ -12,7 +13,6 @@ function formatCurrency(value) {
 }
 
 export default function BiayaTransport() {
-  const [petugasList, setPetugasList] = useState([])
   const [biayaMap, setBiayaMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -23,37 +23,29 @@ export default function BiayaTransport() {
 
   const fetchData = async () => {
     setLoading(true)
-    const { data: petugasData, error: petugasError } = await supabase
-      .from('petugas')
-      .select('*')
-      .eq('is_active', true)
-      .order('nama')
-
-    const { data: biayaData, error: biayaError } = await supabase
+    const { data, error } = await supabase
       .from('biaya_transport')
       .select('*')
 
-    if (petugasError) console.error('Error fetching petugas:', petugasError)
-    if (biayaError) console.error('Error fetching biaya transport:', biayaError)
+    if (error) console.error('Error fetching biaya transport:', error)
 
     const map = {}
-    ;(biayaData || []).forEach((b) => {
-      if (!map[b.petugas_id]) {
-        map[b.petugas_id] = {}
+    ;(data || []).forEach((b) => {
+      if (!map[b.nama_sholat]) {
+        map[b.nama_sholat] = {}
       }
-      map[b.petugas_id][b.nama_sholat] = b.nominal
+      map[b.nama_sholat][b.peran] = b.nominal
     })
     setBiayaMap(map)
-    setPetugasList(petugasData || [])
     setLoading(false)
   }
 
-  const handleNominalChange = (petugasId, sholat, value) => {
+  const handleNominalChange = (sholat, peran, value) => {
     setBiayaMap((prev) => ({
       ...prev,
-      [petugasId]: {
-        ...prev[petugasId],
-        [sholat]: Number(value) || 0,
+      [sholat]: {
+        ...prev[sholat],
+        [peran]: Number(value) || 0,
       },
     }))
   }
@@ -62,25 +54,30 @@ export default function BiayaTransport() {
     setSaving(true)
     const promises = []
 
-    petugasList.forEach((p) => {
-      const biayaPetugas = biayaMap[p.id] || {}
-      prayers.forEach((sholat) => {
-        const nominal = biayaPetugas[sholat] || 0
-        const existing = biayaPetugas[sholat + '_id']
+    for (const sholat of prayers) {
+      for (const peran of roles) {
+        const nominal = biayaMap[sholat]?.[peran] || 0
+
+        const { data: existing } = await supabase
+          .from('biaya_transport')
+          .select('id')
+          .eq('nama_sholat', sholat)
+          .eq('peran', peran)
+          .maybeSingle()
 
         const data = {
-          petugas_id: p.id,
           nama_sholat: sholat,
+          peran,
           nominal,
         }
 
         if (existing) {
-          promises.push(supabase.from('biaya_transport').update(data).eq('id', existing))
+          promises.push(supabase.from('biaya_transport').update(data).eq('id', existing.id))
         } else {
           promises.push(supabase.from('biaya_transport').insert([data]))
         }
-      })
-    })
+      }
+    }
 
     try {
       const results = await Promise.all(promises)
@@ -112,7 +109,7 @@ export default function BiayaTransport() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
           <h1 className="font-h1 text-h1 text-on-surface mb-2">Biaya Pengganti Transport</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">Kelola nominal biaya transport per petugas per sholat.</p>
+          <p className="font-body-md text-body-md text-on-surface-variant">Kelola nominal biaya transport per role per sholat.</p>
         </div>
         <button
           onClick={handleSave}
@@ -133,7 +130,7 @@ export default function BiayaTransport() {
           <div>
             <h3 className="font-h3 text-h3 text-on-surface mb-1">Informasi Biaya Transport</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Biaya transport akan dihitung setiap kali petugas melakukan presensi hadir. 
+              Biaya transport akan dihitung setiap kali petugas melakukan presensi hadir berdasarkan role yang dilaksanakan (Imam atau Muadzin). 
               Total biaya transport akan terakumulasi dan ditambahkan dengan gaji pokok di akhir bulan.
             </p>
           </div>
@@ -146,52 +143,28 @@ export default function BiayaTransport() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface-bright border-b border-outline-variant">
-                <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider w-64">Nama Petugas</th>
-                {prayers.map((sholat) => (
-                  <th key={sholat} className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-center">
-                    {sholat}
-                  </th>
-                ))}
-                <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">
-                  Total/Bulan
-                </th>
+                <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Sholat</th>
+                <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-center">Imam</th>
+                <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-center">Muadzin</th>
               </tr>
             </thead>
             <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
-              {petugasList.map((p) => {
-                const biayaPetugas = biayaMap[p.id] || {}
-                const totalBulan = prayers.reduce((sum, sholat) => sum + (biayaPetugas[sholat] || 0), 0)
-
-                return (
-                  <tr key={p.id} className="hover:bg-surface-container-low transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant font-bold text-xs uppercase">
-                          {p.nama.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-on-surface">{p.nama}</p>
-                          <p className="text-xs text-on-surface-variant capitalize">{p.role}</p>
-                        </div>
-                      </div>
+              {prayers.map((sholat) => (
+                <tr key={sholat} className="hover:bg-surface-container-low transition-colors">
+                  <td className="p-4 font-medium text-on-surface">{sholat}</td>
+                  {roles.map((peran) => (
+                    <td key={peran} className="p-4 text-center">
+                      <input
+                        className="w-32 text-right px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                        min="0"
+                        type="number"
+                        value={biayaMap[sholat]?.[peran] || 0}
+                        onChange={(e) => handleNominalChange(sholat, peran, e.target.value)}
+                      />
                     </td>
-                    {prayers.map((sholat) => (
-                      <td key={sholat} className="p-4 text-center">
-                        <input
-                          className="w-24 text-right px-2 py-1 rounded border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-sm text-body-sm"
-                          min="0"
-                          type="number"
-                          value={biayaPetugas[sholat] || 0}
-                          onChange={(e) => handleNominalChange(p.id, sholat, e.target.value)}
-                        />
-                      </td>
-                    ))}
-                    <td className="p-4 text-right">
-                      <span className="font-medium text-primary">{formatCurrency(totalBulan)}</span>
-                    </td>
-                  </tr>
-                )
-              })}
+                  ))}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

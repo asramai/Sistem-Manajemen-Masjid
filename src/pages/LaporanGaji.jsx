@@ -51,7 +51,8 @@ function RosterTable({ roster }) {
           <thead>
             <tr className="bg-surface-bright border-b border-outline-variant font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
               <th className="p-4 font-semibold sticky left-0 bg-surface-bright z-10 w-64 shadow-[1px_0_0_0_#e2e2e2]">Nama &amp; Peran</th>
-              <th className="p-4 font-semibold text-center">Hadir</th>
+              <th className="p-4 font-semibold text-center">Hadir sebagai Muadzin</th>
+              <th className="p-4 font-semibold text-center">Hadir sebagai Imam</th>
               <th className="p-4 font-semibold text-center">Izin</th>
               <th className="p-4 font-semibold text-center">Alpha</th>
               <th className="p-4 font-semibold text-right">Jumlah Transport</th>
@@ -81,7 +82,12 @@ function RosterTable({ roster }) {
                 </td>
                 <td className="p-4 text-center">
                   <span className="inline-flex items-center justify-center bg-secondary-container text-on-secondary-container font-medium px-2.5 py-1 rounded-md min-w-[40px]">
-                    {item.hadir}
+                    {item.hadir_muadzin}
+                  </span>
+                </td>
+                <td className="p-4 text-center">
+                  <span className="inline-flex items-center justify-center bg-secondary-container text-on-secondary-container font-medium px-2.5 py-1 rounded-md min-w-[40px]">
+                    {item.hadir_imam}
                   </span>
                 </td>
                 <td className="p-4 text-center">
@@ -126,69 +132,99 @@ export default function LaporanGaji() {
 
   const fetchRoster = async () => {
     setLoading(true)
-    const [petugasData, biayaData] = await Promise.all([
+    const [petugasResult, biayaResult, jadwalBulananResult] = await Promise.all([
       supabase.from('petugas').select('*').eq('is_active', true).order('nama'),
       supabase.from('biaya_transport').select('*'),
+      supabase
+        .from('jadwal_bulanan')
+        .select('*')
+        .gte('tanggal', `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`)
+        .lt('tanggal', `${selectedYear}-${String(selectedMonth + 2 > 12 ? selectedMonth + 2 - 12 : selectedMonth + 2).padStart(2, '0')}-01`),
     ])
 
-    if (petugasData.error) {
-      console.error('Error fetching petugas:', petugasData.error)
+    if (petugasResult.error) {
+      console.error('Error fetching petugas:', petugasResult.error)
       setLoading(false)
       return
     }
 
     const map = {}
-    ;(biayaData.data || []).forEach((b) => {
-      if (!map[b.petugas_id]) {
-        map[b.petugas_id] = {}
+    ;(biayaResult.data || []).forEach((b) => {
+      if (!map[b.nama_sholat]) {
+        map[b.nama_sholat] = {}
       }
-      map[b.petugas_id][b.nama_sholat] = b.nominal
+      map[b.nama_sholat][b.peran] = b.nominal
     })
     setBiayaMap(map)
 
-    const monthStr = String(selectedMonth + 1).padStart(2, '0')
-    const startDate = `${selectedYear}-${monthStr}-01`
-    const nextMonth = selectedMonth + 2
-    const endDate = `${selectedYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
+    const jadwalBulananMap = {}
+    ;(jadwalBulananResult.data || []).forEach((j) => {
+      if (!jadwalBulananMap[j.tanggal]) {
+        jadwalBulananMap[j.tanggal] = {}
+      }
+      jadwalBulananMap[j.tanggal][j.nama_sholat] = j
+    })
 
     const rosterData = await Promise.all(
-      (petugasData.data || []).map(async (p) => {
+      (petugasResult.data || []).map(async (p) => {
         const { data: presensiData } = await supabase
           .from('presensi')
-          .select('status, jadwal_id')
+          .select('status, jadwal_id, tanggal')
           .eq('petugas_id', p.id)
-          .gte('tanggal', startDate)
-          .lt('tanggal', endDate)
+          .gte('tanggal', `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`)
+          .lt('tanggal', `${selectedYear}-${String(selectedMonth + 2 > 12 ? selectedMonth + 2 - 12 : selectedMonth + 2).padStart(2, '0')}-01`)
 
-        const hadirRecords = (presensiData || []).filter((pr) => pr.status === 'hadir')
-        const izinRecords = (presensiData || []).filter((pr) => pr.status === 'izin').length
-        const alphaRecords = (presensiData || []).filter((pr) => pr.status === 'alpha').length
-
-        let hadir = hadirRecords.length
+        let hadirMuadzin = 0
+        let hadirImam = 0
+        let izin = 0
+        let alpha = 0
         let transport = 0
 
-        if (hadirRecords.length > 0) {
-          const jadwalIds = hadirRecords.map((r) => r.jadwal_id)
+        if (presensiData) {
+          const jadwalIds = [...new Set(presensiData.filter((pr) => pr.status === 'hadir').map((r) => r.jadwal_id))]
           const { data: jadwalData } = await supabase
             .from('jadwal')
             .select('id, nama_sholat')
             .in('id', jadwalIds)
 
-          const sholatCount = {}
+          const jadwalMap = {}
           ;(jadwalData || []).forEach((j) => {
-            sholatCount[j.nama_sholat] = (sholatCount[j.nama_sholat] || 0) + 1
+            jadwalMap[j.id] = j.nama_sholat
           })
 
-          const petugasBiaya = map[p.id] || {}
-          prayers.forEach((sholat) => {
-            const count = sholatCount[sholat] || 0
-            transport += count * (petugasBiaya[sholat] || 0)
+          presensiData.forEach((pr) => {
+            if (pr.status === 'hadir') {
+              const namaSholat = jadwalMap[pr.jadwal_id]
+              if (namaSholat) {
+                const jadwalBulanan = jadwalBulananMap[pr.tanggal]?.[namaSholat]
+                if (jadwalBulanan) {
+                  let peran = null
+                  if (jadwalBulanan.imam_utama_id === p.id || jadwalBulanan.imam_cadangan_id === p.id) {
+                    peran = 'imam'
+                  } else if (jadwalBulanan.muadzin_utama_id === p.id || jadwalBulanan.muadzin_cadangan_id === p.id) {
+                    peran = 'muadzin'
+                  }
+
+                  if (peran) {
+                    const nominal = map[namaSholat]?.[peran] || 0
+                    transport += nominal
+
+                    if (peran === 'imam') hadirImam++
+                    if (peran === 'muadzin') hadirMuadzin++
+                  }
+                }
+              }
+            } else if (pr.status === 'izin') {
+              izin++
+            } else if (pr.status === 'alpha') {
+              alpha++
+            }
           })
         }
 
         let gaji = 0
         if (p.tipe_honor === 'per_hadir') {
-          gaji = hadir * (p.honor_per_hadir || 0)
+          gaji = (hadirImam + hadirMuadzin) * (p.honor_per_hadir || 0)
         } else {
           gaji = p.honor_bulanan || 0
         }
@@ -199,9 +235,10 @@ export default function LaporanGaji() {
           role: p.role,
           avatar_url: p.avatar_url,
           initials: p.nama.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2),
-          hadir,
-          izin: izinRecords || '-',
-          alpha: alphaRecords || '-',
+          hadir_muadzin: hadirMuadzin,
+          hadir_imam: hadirImam,
+          izin: izin || '-',
+          alpha: alpha || '-',
           transport,
           gaji,
           total: transport + gaji,
@@ -222,7 +259,7 @@ export default function LaporanGaji() {
   const totalGaji = roster.reduce((sum, item) => sum + item.gaji, 0)
   const totalTransport = roster.reduce((sum, item) => sum + item.transport, 0)
   const totalPetugas = roster.length
-  const avgKehadiran = roster.length > 0 ? Math.round(roster.reduce((sum, item) => sum + item.hadir, 0) / roster.length) : 0
+  const avgKehadiran = roster.length > 0 ? Math.round(roster.reduce((sum, item) => sum + item.hadir_muadzin + item.hadir_imam, 0) / roster.length) : 0
 
   const currentMonthLabel = `${months[selectedMonth]} ${selectedYear}`
 
