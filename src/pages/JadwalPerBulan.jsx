@@ -343,57 +343,65 @@ export default function JadwalPerBulan() {
                 </button>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
                     <tr className="border-b border-outline-variant">
-                      <th rowSpan="2" className="px-4 py-3 font-label-md text-label-md text-on-surface bg-surface-container-high/50">Hari/Tanggal</th>
-                      <th colSpan="2" className="px-4 py-3 font-label-md text-label-md text-on-surface bg-surface-container-high/50 text-center">Waktu Sholat</th>
+                      <th rowSpan="3" className="px-4 py-3 font-label-md text-label-md text-on-surface bg-surface-container-high/50 align-top">Hari/Tanggal</th>
+                      <th colSpan="10" className="px-4 py-3 font-label-md text-label-md text-on-surface bg-surface-container-high/50 text-center">Waktu Sholat</th>
                     </tr>
                     <tr className="border-b border-outline-variant">
-                      <th className="px-4 py-2 font-body-sm text-body-sm text-on-surface-variant bg-surface-container-high/50 text-center">Muadzin</th>
-                      <th className="px-4 py-2 font-body-sm text-body-sm text-on-surface-variant bg-surface-container-high/50 text-center">Imam</th>
+                      {['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].map((sholat) => (
+                        <th key={sholat} colSpan="2" className="px-4 py-2 font-body-sm text-body-sm text-on-surface-variant bg-surface-container-high/50 text-center">{sholat}</th>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-outline-variant">
+                      {['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].map((sholat) => (
+                        <React.Fragment key={sholat}>
+                          <th className="px-4 py-2 font-body-sm text-body-sm text-on-surface-variant bg-surface-container-high/50 text-center">Muadzin</th>
+                          <th className="px-4 py-2 font-body-sm text-body-sm text-on-surface-variant bg-surface-container-high/50 text-center">Imam</th>
+                        </React.Fragment>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant">
-                    {selectedDates
-                      .sort()
-                      .map((dateStr) => {
-                        const date = new Date(dateStr)
-                        const day = date.getDate()
-                        const month = date.toLocaleString('id-ID', { month: 'short' })
-                        const dayName = date.toLocaleString('id-ID', { weekday: 'long' })
-                        const jadwalDate = jadwalBulanan
-                          .filter((j) => j.tanggal === dateStr)
-                          .sort((a, b) => allSholat.indexOf(a.nama_sholat) - allSholat.indexOf(b.nama_sholat))
+                    {selectedDates.sort().map((dateStr) => {
+                      const date = new Date(dateStr)
+                      const day = date.getDate()
+                      const month = date.toLocaleString('id-ID', { month: 'short' })
+                      const dayName = date.toLocaleString('id-ID', { weekday: 'long' })
 
-                        if (jadwalDate.length === 0) {
-                          return (
-                            <tr key={dateStr}>
-                              <td className="px-4 py-3 font-body-md text-on-surface">{dayName}, {day} {month}</td>
-                              <td colSpan="2" className="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant text-center">Belum ada jadwal</td>
-                            </tr>
-                          )
-                        }
+                      const jadwalMap = {}
+                      jadwalBulanan.filter((j) => j.tanggal === dateStr).forEach((j) => {
+                        jadwalMap[j.nama_sholat] = j
+                      })
 
-                        return jadwalDate.map((jadwal, idx) => (
-                          <tr key={jadwal.id || `${dateStr}-${idx}`} className="hover:bg-surface-container-low/50 transition-colors">
-                            {idx === 0 && (
-                              <td rowSpan={jadwalDate.length} className="px-4 py-3 font-body-md font-semibold text-on-surface align-top">
-                                {dayName}, {day} {month}
-                              </td>
-                            )}
-                            <td className="px-4 py-3 font-body-md text-on-surface text-center">{jadwal.nama_sholat}</td>
-                            <td className="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant text-center">
-                              {petugasList.find((p) => p.id === jadwal.muadzin_utama_id)?.nama || '-'}
-                              {jadwal.muadzin_cadangan_id && ` / ${petugasList.find((p) => p.id === jadwal.muadzin_cadangan_id)?.nama}`}
-                            </td>
-                            <td className="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant text-center">
-                              {petugasList.find((p) => p.id === jadwal.imam_utama_id)?.nama || '-'}
-                              {jadwal.imam_cadangan_id && ` / ${petugasList.find((p) => p.id === jadwal.imam_cadangan_id)?.nama}`}
-                            </td>
-                          </tr>
-                        ))
-                      })}
+                      return (
+                        <tr key={dateStr} className="hover:bg-surface-container-low/50 transition-colors">
+                          <td className="px-4 py-3 font-body-md font-semibold text-on-surface align-top whitespace-nowrap">
+                            <div className="flex items-center justify-between gap-2">
+                              <span>{dayName}, {day} {month}</span>
+                              <button
+                                onClick={() => handleDateClick(day)}
+                                className="text-on-surface-variant hover:text-error transition-colors flex-shrink-0"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">close</span>
+                              </button>
+                            </div>
+                          </td>
+                          {['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].map((sholat) => {
+                            const jadwal = jadwalMap[sholat]
+                            const muadzin = jadwal ? (petugasList.find((p) => p.id === jadwal.muadzin_utama_id)?.nama || '-') : '-'
+                            const imam = jadwal ? (petugasList.find((p) => p.id === jadwal.imam_utama_id)?.nama || '-') : '-'
+                            return (
+                              <React.Fragment key={sholat}>
+                                <td className="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant text-center">{muadzin}</td>
+                                <td className="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant text-center">{imam}</td>
+                              </React.Fragment>
+                            )
+                          })}
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
