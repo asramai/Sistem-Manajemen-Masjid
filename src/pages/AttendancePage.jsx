@@ -22,9 +22,12 @@ function getInitials(name) {
 
 export default function AttendancePage() {
   const [selectedPrayer, setSelectedPrayer] = useState('Subuh')
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date()
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  })
   const [petugas, setPetugas] = useState([])
-  const [jadwal, setJadwal] = useState([])
+  const [jadwalBulanan, setJadwalBulanan] = useState([])
   const [penugasanMap, setPenugasanMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -38,7 +41,7 @@ export default function AttendancePage() {
 
   useEffect(() => {
     fetchPenugasan()
-  }, [selectedDate, selectedPrayer, jadwal])
+  }, [selectedDate, selectedPrayer, jadwalBulanan])
 
   const fetchData = async () => {
     setLoading(true)
@@ -48,38 +51,28 @@ export default function AttendancePage() {
       .eq('is_active', true)
       .order('nama')
 
-    const { data: jadwalData, error: jadwalError } = await supabase
-      .from('jadwal')
-      .select('*')
-      .order('nama_sholat')
-
     if (petugasError) console.error('Error fetching petugas:', petugasError)
-    if (jadwalError) console.error('Error fetching jadwal:', jadwalError)
 
     setPetugas(petugasData || [])
-    setJadwal(jadwalData || [])
     setLoading(false)
   }
 
   const fetchPenugasan = async () => {
-    const jadwalItem = jadwal.find((j) => j.nama_sholat === selectedPrayer)
-    if (!jadwalItem) return
-
     const { data, error } = await supabase
-      .from('penugasan_sholat')
+      .from('jadwal_bulanan')
       .select('*')
-      .eq('jadwal_id', jadwalItem.id)
       .eq('tanggal', selectedDate)
+      .eq('nama_sholat', selectedPrayer)
       .single()
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching penugasan:', error)
+      console.error('Error fetching jadwal:', error)
       return
     }
 
     if (data) {
       setPenugasanMap({
-        [data.jadwal_id]: {
+        [selectedPrayer]: {
           muadzin_utama_id: data.muadzin_utama_id,
           muadzin_cadangan_id: data.muadzin_cadangan_id,
           imam_utama_id: data.imam_utama_id,
@@ -87,11 +80,19 @@ export default function AttendancePage() {
         },
       })
     } else {
-      setPenugasanMap({})
+      setPenugasanMap((prev) => ({
+        ...prev,
+        [selectedPrayer]: {
+          muadzin_utama_id: '',
+          muadzin_cadangan_id: '',
+          imam_utama_id: '',
+          imam_cadangan_id: '',
+        },
+      }))
     }
   }
 
-  const currentPenugasan = penugasanMap[jadwal.find((j) => j.nama_sholat === selectedPrayer)?.id] || {
+  const currentPenugasan = penugasanMap[selectedPrayer] || {
     muadzin_utama_id: '',
     muadzin_cadangan_id: '',
     imam_utama_id: '',
@@ -99,26 +100,20 @@ export default function AttendancePage() {
   }
 
   const handleChange = (field, value) => {
-    const jadwalItem = jadwal.find((j) => j.nama_sholat === selectedPrayer)
-    if (!jadwalItem) return
-
     setPenugasanMap((prev) => ({
       ...prev,
-      [jadwalItem.id]: {
-        ...prev[jadwalItem.id],
+      [selectedPrayer]: {
+        ...prev[selectedPrayer],
         [field]: value || null,
       },
     }))
   }
 
   const handleSave = async () => {
-    const jadwalItem = jadwal.find((j) => j.nama_sholat === selectedPrayer)
-    if (!jadwalItem) return
-
     setSaving(true)
     const data = {
-      jadwal_id: jadwalItem.id,
       tanggal: selectedDate,
+      nama_sholat: selectedPrayer,
       muadzin_utama_id: currentPenugasan.muadzin_utama_id,
       muadzin_cadangan_id: currentPenugasan.muadzin_cadangan_id,
       imam_utama_id: currentPenugasan.imam_utama_id,
@@ -126,8 +121,8 @@ export default function AttendancePage() {
     }
 
     const { error } = await supabase
-      .from('penugasan_sholat')
-      .upsert(data, { onConflict: ['jadwal_id', 'tanggal'] })
+      .from('jadwal_bulanan')
+      .upsert(data, { onConflict: ['tanggal', 'nama_sholat'] })
 
     if (error) {
       alert('Gagal menyimpan: ' + error.message)
