@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import AttendancePage from './pages/AttendancePage'
@@ -33,8 +33,6 @@ function TopAppBar({ currentPath, onLogout, profile }) {
       ]
     : [
         { label: 'Beranda', icon: 'home', path: '/' },
-        { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
-        { label: 'Laporan', icon: 'description', path: '/laporan' },
         { label: 'Jadwal Saya', icon: 'calendar_today', path: '/jadwal-saya' },
         { label: 'Izin', icon: 'event_busy', path: '/konfirmasi-izin' },
       ]
@@ -81,31 +79,79 @@ function TopAppBar({ currentPath, onLogout, profile }) {
   )
 }
 
-function BottomNav({ currentPath, onLogout, profile }) {
+function MoreMenu({ isOpen, onClose, currentPath, onLogout, profile }) {
   const navigate = useNavigate()
   const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
 
-  const navItems = isAdmin
+  const moreItems = isAdmin
     ? [
-        { label: 'Beranda', icon: 'home', path: '/' },
-        { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
-        { label: 'Laporan', icon: 'description', path: '/laporan' },
         { label: 'Profil', icon: 'person', path: '/profil' },
         { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
         { label: 'Jadwal', icon: 'calendar_month', path: '/jadwal' },
         { label: 'Buat Akun', icon: 'person_add', path: '/buat-akun' },
       ]
     : [
+        { label: 'Laporan', icon: 'description', path: '/laporan' },
+      ]
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-end justify-center md:hidden" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+      <div className="relative w-full bg-surface rounded-t-2xl shadow-xl border-t border-outline-variant p-6 pb-24" onClick={(e) => e.stopPropagation()}>
+        <div className="w-12 h-1 bg-outline-variant rounded-full mx-auto mb-4"></div>
+        <h3 className="font-h3 text-h3 text-on-surface mb-4">Menu Lainnya</h3>
+        <div className="space-y-2">
+          {moreItems.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => {
+                navigate(item.path)
+                onClose()
+              }}
+              className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-colors ${
+                currentPath === item.path
+                  ? 'bg-primary-container text-on-primary-container'
+                  : 'hover:bg-surface-container-high'
+              }`}
+            >
+              <span className="material-symbols-outlined">{item.icon}</span>
+              <span className="font-label-md text-label-md">{item.label}</span>
+            </button>
+          ))}
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-error/10 text-error transition-colors"
+          >
+            <span className="material-symbols-outlined">logout</span>
+            <span className="font-label-md text-label-md">Logout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BottomNav({ currentPath, onLogout, profile, onMoreClick }) {
+  const navigate = useNavigate()
+  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+
+  const mainItems = isAdmin
+    ? [
         { label: 'Beranda', icon: 'home', path: '/' },
         { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
         { label: 'Laporan', icon: 'description', path: '/laporan' },
+      ]
+    : [
+        { label: 'Beranda', icon: 'home', path: '/' },
         { label: 'Jadwal Saya', icon: 'calendar_today', path: '/jadwal-saya' },
         { label: 'Izin', icon: 'event_busy', path: '/konfirmasi-izin' },
       ]
 
   return (
     <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-surface border-t border-outline-variant shadow-lg md:hidden">
-      {navItems.map((item) => (
+      {mainItems.map((item) => (
         <button
           key={item.label}
           onClick={() => navigate(item.path)}
@@ -122,12 +168,11 @@ function BottomNav({ currentPath, onLogout, profile }) {
         </button>
       ))}
       <button
-        onClick={onLogout}
+        onClick={onMoreClick}
         className="flex flex-col items-center justify-center px-4 py-1 rounded-xl active:scale-95 transition-transform text-on-surface-variant hover:bg-surface-container-high"
-        title="Logout"
       >
-        <span className="material-symbols-outlined">logout</span>
-        <span className="font-label-sm text-label-sm mt-1">Logout</span>
+        <span className="material-symbols-outlined">more_horiz</span>
+        <span className="font-label-sm text-label-sm mt-1">More</span>
       </button>
     </nav>
   )
@@ -175,6 +220,7 @@ export default function App() {
   const currentPath = location.pathname
   const { session, loading, signOut, showWarning, resetIdle, profile } = useAuth()
   const navigate = useNavigate()
+  const [showMore, setShowMore] = useState(false)
 
   if (loading) {
     return (
@@ -200,13 +246,15 @@ export default function App() {
     navigate('/login')
   }
 
+  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+
   return (
     <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col pb-24 md:pb-0">
       {session && <TopAppBar currentPath={currentPath} onLogout={handleLogout} profile={profile} />}
       <main className="flex-grow">
         {currentPath === '/login' && <LoginPage />}
         {currentPath === '/laporan' && <LaporanGaji />}
-        {currentPath === '/presensi' && <AttendancePage />}
+        {currentPath === '/presensi' && (isAdmin ? <AttendancePage /> : <Navigate to="/" replace />)}
         {currentPath === '/profil' && <UserManagement />}
         {currentPath === '/rekap' && <RekapKehadiranSaya />}
         {currentPath === '/biaya-transport' && <BiayaTransport />}
@@ -216,7 +264,12 @@ export default function App() {
         {currentPath === '/buat-akun' && <BuatAkunPetugas />}
         {currentPath === '/' && <AttendancePage />}
       </main>
-      {session && <BottomNav currentPath={currentPath} onLogout={handleLogout} profile={profile} />}
+      {session && (
+        <>
+          <BottomNav currentPath={currentPath} onLogout={handleLogout} profile={profile} onMoreClick={() => setShowMore(true)} />
+          <MoreMenu isOpen={showMore} onClose={() => setShowMore(false)} currentPath={currentPath} onLogout={handleLogout} profile={profile} />
+        </>
+      )}
       {showWarning && (
         <IdleWarningModal
           remainingSeconds={IDLE_TIMEOUT}

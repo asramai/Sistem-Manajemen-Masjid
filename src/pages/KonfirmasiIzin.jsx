@@ -16,26 +16,56 @@ export default function KonfirmasiIzin() {
   })
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef(null)
+  const [petugasId, setPetugasId] = useState(null)
 
   useEffect(() => {
     if (session?.user?.id) {
       fetchIzin()
+      fetchPetugasId()
     }
   }, [session])
 
-  const fetchIzin = async () => {
+  const fetchPetugasId = async () => {
     if (!session?.user?.id) return
+    const { data } = await supabase
+      .from('petugas')
+      .select('id')
+      .eq('auth_user_id', session.user.id)
+      .maybeSingle()
+
+    if (data) {
+      setPetugasId(data.id)
+    } else if (profile?.nama) {
+      const { data: byName } = await supabase
+        .from('petugas')
+        .select('id')
+        .ilike('nama', profile.nama)
+        .limit(1)
+        .maybeSingle()
+
+      setPetugasId(byName?.id || null)
+    }
+  }
+
+  const fetchIzin = async () => {
+    if (!petugasId) return
     setLoading(true)
 
     const { data } = await supabase
       .from('konfirmasi_izin')
       .select('*')
-      .eq('petugas_id', session.user.id)
+      .eq('petugas_id', petugasId)
       .order('tanggal', { ascending: false })
 
     setIzinList(data || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (petugasId) {
+      fetchIzin()
+    }
+  }, [petugasId])
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
@@ -62,10 +92,14 @@ export default function KonfirmasiIzin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!petugasId) {
+      alert('Data petugas tidak ditemukan. Hubungi admin.')
+      return
+    }
     setSaving(true)
 
     const data = {
-      petugas_id: session.user.id,
+      petugas_id: petugasId,
       tanggal: form.tanggal,
       nama_sholat: form.nama_sholat,
       alasan: form.alasan,

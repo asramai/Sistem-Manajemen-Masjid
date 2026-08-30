@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
 const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
@@ -118,6 +119,7 @@ function RosterTable({ roster }) {
 }
 
 export default function LaporanGaji() {
+  const { profile, session } = useAuth()
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedRole, setSelectedRole] = useState('Semua')
@@ -125,10 +127,37 @@ export default function LaporanGaji() {
   const [roster, setRoster] = useState([])
   const [loading, setLoading] = useState(true)
   const [biayaMap, setBiayaMap] = useState({})
+  const [currentPetugasId, setCurrentPetugasId] = useState(null)
 
   useEffect(() => {
     fetchRoster()
   }, [selectedMonth, selectedYear])
+
+  useEffect(() => {
+    async function fetchCurrentPetugas() {
+      if (!session?.user?.id) return
+      const { data } = await supabase
+        .from('petugas')
+        .select('id')
+        .eq('auth_user_id', session.user.id)
+        .maybeSingle()
+
+      if (data) {
+        setCurrentPetugasId(data.id)
+      } else {
+        const { data: byName } = await supabase
+          .from('petugas')
+          .select('id')
+          .ilike('nama', profile?.nama || '')
+          .limit(1)
+          .maybeSingle()
+
+        setCurrentPetugasId(byName?.id || null)
+      }
+    }
+
+    fetchCurrentPetugas()
+  }, [session, profile])
 
   const fetchRoster = async () => {
     setLoading(true)
@@ -252,16 +281,21 @@ export default function LaporanGaji() {
     setLoading(false)
   }
 
+  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+
   const filteredRoster = roster.filter((item) => {
+    if (!isAdmin && currentPetugasId) {
+      if (item.id !== currentPetugasId) return false
+    }
     const matchesRole = selectedRole === 'Semua' || item.role === selectedRole.toLowerCase()
     const matchesSearch = item.nama.toLowerCase().includes(search.toLowerCase()) || item.role.toLowerCase().includes(search.toLowerCase())
     return matchesRole && matchesSearch
   })
 
-  const totalGaji = roster.reduce((sum, item) => sum + item.gaji, 0)
-  const totalTransport = roster.reduce((sum, item) => sum + item.transport, 0)
-  const totalPetugas = roster.length
-  const avgKehadiran = roster.length > 0 ? Math.round(roster.reduce((sum, item) => sum + item.hadir_muadzin + item.hadir_imam, 0) / roster.length) : 0
+  const totalGaji = filteredRoster.reduce((sum, item) => sum + item.gaji, 0)
+  const totalTransport = filteredRoster.reduce((sum, item) => sum + item.transport, 0)
+  const totalPetugas = filteredRoster.length
+  const avgKehadiran = filteredRoster.length > 0 ? Math.round(filteredRoster.reduce((sum, item) => sum + item.hadir_muadzin + item.hadir_imam, 0) / filteredRoster.length) : 0
 
   const currentMonthLabel = `${months[selectedMonth]} ${selectedYear}`
 
@@ -294,10 +328,12 @@ export default function LaporanGaji() {
               ))}
             </select>
           </div>
-          <button className="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95">
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>picture_as_pdf</span>
-            Cetak PDF Laporan Gaji
-          </button>
+          {isAdmin && (
+            <button className="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95">
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>picture_as_pdf</span>
+              Cetak PDF Laporan Gaji
+            </button>
+          )}
         </div>
       </div>
 
@@ -325,35 +361,37 @@ export default function LaporanGaji() {
       </section>
 
       {/* Search and Filter Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface rounded-xl p-4 border border-outline-variant shadow-sm">
-        <div className="relative w-full sm:w-96">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style={{ fontSize: '20px' }}>
-            search
-          </span>
-          <input
-            className="w-full bg-surface-bright border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg pl-10 pr-4 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-            placeholder="Cari nama petugas atau peran..."
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {isAdmin && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface rounded-xl p-4 border border-outline-variant shadow-sm">
+          <div className="relative w-full sm:w-96">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style={{ fontSize: '20px' }}>
+              search
+            </span>
+            <input
+              className="w-full bg-surface-bright border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg pl-10 pr-4 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              placeholder="Cari nama petugas atau peran..."
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+            {roles.map((role) => (
+              <button
+                key={role}
+                onClick={() => setSelectedRole(role)}
+                className={`px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors ${
+                  selectedRole === role
+                    ? 'bg-secondary-container text-on-secondary-container'
+                    : 'bg-surface-bright border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+                }`}
+              >
+                {role}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-          {roles.map((role) => (
-            <button
-              key={role}
-              onClick={() => setSelectedRole(role)}
-              className={`px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors ${
-                selectedRole === role
-                  ? 'bg-secondary-container text-on-secondary-container'
-                  : 'bg-surface-bright border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
-              }`}
-            >
-              {role}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Detailed Roster Table */}
       {loading ? (
