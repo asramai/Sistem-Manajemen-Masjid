@@ -124,7 +124,10 @@ export default function HomePage() {
 
     const jadwalMap = {}
     ;(jadwalMasterResult.data || []).forEach((j) => {
-      jadwalMap[j.nama_sholat] = j.id
+      if (!jadwalMap[j.nama_sholat]) {
+        jadwalMap[j.nama_sholat] = []
+      }
+      jadwalMap[j.nama_sholat].push(j.id)
     })
 
     setPresensiList(presensiResult.data || [])
@@ -247,8 +250,8 @@ export default function HomePage() {
                 </div>
               ) : (
                 todayJadwal.map((jadwal) => {
-                  const masterJadwalId = jadwalMap[jadwal.nama_sholat]
-                  const presensiCount = masterJadwalId ? todayPresensi.filter((pr) => pr.jadwal_id === masterJadwalId).length : 0
+                  const masterJadwalIds = jadwalMap[jadwal.nama_sholat] || []
+                  const presensiCount = masterJadwalIds.length > 0 ? todayPresensi.filter((pr) => masterJadwalIds.includes(pr.jadwal_id)).length : 0
                   return (
                     <div key={jadwal.id} className="p-4 hover:bg-surface-container-low transition-colors">
                       <div className="flex items-center justify-between">
@@ -327,8 +330,8 @@ export default function HomePage() {
                 todayJadwal.map((jadwal) => {
                   const isAssigned = jadwal.imam_utama_id === currentPetugasId || jadwal.imam_cadangan_id === currentPetugasId ||
                                     jadwal.muadzin_utama_id === currentPetugasId || jadwal.muadzin_cadangan_id === currentPetugasId
-                  const masterJadwalId = jadwalMap[jadwal.nama_sholat]
-                  const alreadyPresensi = masterJadwalId ? myPresensi.some((pr) => pr.jadwal_id === masterJadwalId) : false
+                  const masterJadwalIds = jadwalMap[jadwal.nama_sholat] || []
+                  const alreadyPresensi = masterJadwalIds.length > 0 ? myPresensi.some((pr) => masterJadwalIds.includes(pr.jadwal_id)) : false
 
                   return (
                     <div key={jadwal.id} className="p-4 hover:bg-surface-container-low transition-colors">
