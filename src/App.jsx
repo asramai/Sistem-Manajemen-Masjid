@@ -11,6 +11,7 @@ import JadwalPerBulan from './pages/JadwalPerBulan'
 import JadwalSaya from './pages/JadwalSaya'
 import KonfirmasiIzin from './pages/KonfirmasiIzin'
 import BuatAkunPetugas from './pages/BuatAkunPetugas'
+import HomePage from './pages/HomePage'
 
 function TopAppBar({ currentPath, onLogout, profile }) {
   const isLaporan = currentPath === '/laporan'
@@ -262,7 +263,7 @@ export default function App() {
         {currentPath === '/jadwal-saya' && <JadwalSaya />}
         {currentPath === '/konfirmasi-izin' && <KonfirmasiIzin />}
         {currentPath === '/buat-akun' && <BuatAkunPetugas />}
-        {currentPath === '/' && <AttendancePage />}
+        {currentPath === '/' && <HomePage />}
       </main>
       {session && (
         <>
