@@ -41,7 +41,11 @@ export default function AttendancePage() {
   const imamList = useMemo(() => petugas.filter((p) => p.role === 'imam'), [petugas])
   const muadzinList = useMemo(() => petugas.filter((p) => p.role === 'muadzin'), [petugas])
 
-  const jadwalItem = useMemo(() => jadwalList.find((j) => j.nama_sholat === selectedPrayer), [jadwalList, selectedPrayer])
+  const jadwalItem = useMemo(() => {
+    const found = jadwalList.find((j) => j.nama_sholat === selectedPrayer)
+    console.log('jadwalItem lookup:', { selectedPrayer, jadwalListLength: jadwalList.length, found: found?.id })
+    return found
+  }, [jadwalList, selectedPrayer])
 
   useEffect(() => {
     fetchData()
@@ -70,19 +74,21 @@ export default function AttendancePage() {
   }
 
   const fetchAssignment = async () => {
-    if (!jadwalItem) return
+    if (!jadwalItem) {
+      console.log('No jadwalItem found for', selectedPrayer, 'jadwalList:', jadwalList)
+      return
+    }
+
+    console.log('Fetching assignment for', selectedDate, selectedPrayer, 'jadwal_id:', jadwalItem.id)
 
     const { data, error } = await supabase
       .from('jadwal_bulanan')
       .select('*')
       .eq('tanggal', selectedDate)
       .eq('nama_sholat', selectedPrayer)
-      .single()
+      .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching assignment:', error)
-      return
-    }
+    console.log('Assignment result:', { data, error })
 
     setJadwalBulanan(data || null)
   }
