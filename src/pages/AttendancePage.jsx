@@ -2,11 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 
 const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya']
-const attendanceStatus = [
-  { value: 'hadir', label: 'Hadir', color: 'bg-secondary-container text-on-secondary-container' },
-  { value: 'izin', label: 'Izin', color: 'bg-surface-container-high text-on-surface-variant' },
-  { value: 'alpha', label: 'Alpha', color: 'bg-primary-container text-on-primary-container' },
-]
 
 function formatDate(date) {
   return new Intl.DateTimeFormat('id-ID', {
@@ -34,18 +29,19 @@ export default function AttendancePage() {
   const [petugas, setPetugas] = useState([])
   const [jadwalList, setJadwalList] = useState([])
   const [jadwalBulanan, setJadwalBulanan] = useState(null)
-  const [presensiRecords, setPresensiRecords] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [penugasan, setPenugasan] = useState({
+    muadzin_utama_id: '',
+    muadzin_cadangan_id: '',
+    imam_utama_id: '',
+    imam_cadangan_id: '',
+  })
 
   const imamList = useMemo(() => petugas.filter((p) => p.role === 'imam'), [petugas])
   const muadzinList = useMemo(() => petugas.filter((p) => p.role === 'muadzin'), [petugas])
 
-  const jadwalItem = useMemo(() => {
-    const found = jadwalList.find((j) => j.nama_sholat === selectedPrayer)
-    console.log('jadwalItem lookup:', { selectedPrayer, jadwalListLength: jadwalList.length, found: found?.id })
-    return found
-  }, [jadwalList, selectedPrayer])
+  const jadwalItem = useMemo(() => jadwalList.find((j) => j.nama_sholat === selectedPrayer), [jadwalList, selectedPrayer])
 
   useEffect(() => {
     fetchData()
@@ -54,7 +50,6 @@ export default function AttendancePage() {
   useEffect(() => {
     if (jadwalItem) {
       fetchAssignment()
-      fetchPresensi()
     }
   }, [selectedDate, selectedPrayer, jadwalItem])
 
@@ -74,12 +69,7 @@ export default function AttendancePage() {
   }
 
   const fetchAssignment = async () => {
-    if (!jadwalItem) {
-      console.log('No jadwalItem found for', selectedPrayer, 'jadwalList:', jadwalList)
-      return
-    }
-
-    console.log('Fetching assignment for', selectedDate, selectedPrayer, 'jadwal_id:', jadwalItem.id)
+    if (!jadwalItem) return
 
     const { data, error } = await supabase
       .from('jadwal_bulanan')
@@ -88,47 +78,34 @@ export default function AttendancePage() {
       .eq('nama_sholat', selectedPrayer)
       .maybeSingle()
 
-    console.log('Assignment result:', { data, error })
-
-    setJadwalBulanan(data || null)
-  }
-
-  const fetchPresensi = async () => {
-    if (!jadwalItem) return
-
-    const { data, error } = await supabase
-      .from('presensi')
-      .select('*')
-      .eq('jadwal_id', jadwalItem.id)
-      .eq('tanggal', selectedDate)
-
     if (error) {
-      console.error('Error fetching presensi:', error)
+      console.error('Error fetching assignment:', error)
       return
     }
 
-    const map = {}
-    ;(data || []).forEach((record) => {
-      map[record.petugas_id] = record
-    })
-    setPresensiRecords(map)
+    setJadwalBulanan(data || null)
+
+    if (data) {
+      setPenugasan({
+        muadzin_utama_id: data.muadzin_utama_id || '',
+        muadzin_cadangan_id: data.muadzin_cadangan_id || '',
+        imam_utama_id: data.imam_utama_id || '',
+        imam_cadangan_id: data.imam_cadangan_id || '',
+      })
+    } else {
+      setPenugasan({
+        muadzin_utama_id: '',
+        muadzin_cadangan_id: '',
+        imam_utama_id: '',
+        imam_cadangan_id: '',
+      })
+    }
   }
 
-  const getPetugasName = (id) => {
-    const p = petugas.find((pet) => pet.id === id)
-    return p ? p.nama : '-'
-  }
-
-  const handleStatusChange = (petugasId, status) => {
-    setPresensiRecords((prev) => ({
+  const handleChange = (field, value) => {
+    setPenugasan((prev) => ({
       ...prev,
-      [petugasId]: {
-        ...prev[petugasId],
-        petugas_id: petugasId,
-        jadwal_id: jadwalItem.id,
-        tanggal: selectedDate,
-        status,
-      },
+      [field]: value || null,
     }))
   }
 
@@ -136,7 +113,33 @@ export default function AttendancePage() {
     if (!jadwalItem) return
     setSaving(true)
 
-    const records = Object.values(presensiRecords).filter((r) => r.petugas_id && r.status)
+    const records = [
+      {
+        petugas_id: penugasan.muadzin_utama_id,
+        jadwal_id: jadwalItem.id,
+        tanggal: selectedDate,
+        status: 'hadir',
+      },
+      {
+        petugas_id: penugasan.muadzin_cadangan_id,
+        jadwal_id: jadwalItem.id,
+        tanggal: selectedDate,
+        status: 'hadir',
+      },
+      {
+        petugas_id: penugasan.imam_utama_id,
+        jadwal_id: jadwalItem.id,
+        tanggal: selectedDate,
+        status: 'hadir',
+      },
+      {
+        petugas_id: penugasan.imam_cadangan_id,
+        jadwal_id: jadwalItem.id,
+        tanggal: selectedDate,
+        status: 'hadir',
+      },
+    ].filter((r) => r.petugas_id)
+
     if (records.length === 0) {
       alert('Tidak ada data presensi untuk disimpan')
       setSaving(false)
@@ -154,7 +157,6 @@ export default function AttendancePage() {
         alert('Gagal menyimpan beberapa data')
       } else {
         alert(`Presensi ${selectedPrayer} berhasil disimpan!`)
-        fetchPresensi()
       }
     } catch (err) {
       alert('Terjadi kesalahan saat menyimpan')
@@ -162,24 +164,6 @@ export default function AttendancePage() {
       setSaving(false)
     }
   }
-
-  const assignedPersonnel = useMemo(() => {
-    if (!jadwalBulanan) return []
-    const list = []
-    if (jadwalBulanan.muadzin_utama_id) {
-      list.push({ id: jadwalBulanan.muadzin_utama_id, role: 'muadzin', label: 'Muadzin Utama' })
-    }
-    if (jadwalBulanan.muadzin_cadangan_id) {
-      list.push({ id: jadwalBulanan.muadzin_cadangan_id, role: 'muadzin', label: 'Muadzin Cadangan' })
-    }
-    if (jadwalBulanan.imam_utama_id) {
-      list.push({ id: jadwalBulanan.imam_utama_id, role: 'imam', label: 'Imam Utama' })
-    }
-    if (jadwalBulanan.imam_cadangan_id) {
-      list.push({ id: jadwalBulanan.imam_cadangan_id, role: 'imam', label: 'Imam Cadangan' })
-    }
-    return list
-  }, [jadwalBulanan])
 
   if (loading) {
     return (
@@ -230,56 +214,105 @@ export default function AttendancePage() {
       {/* Assignment Card */}
       <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
         <div className="p-6 border-b border-outline-variant bg-surface-bright flex justify-between items-center">
-          <h3 className="font-h3 text-h3 text-on-surface">Presensi Petugas - {selectedPrayer}</h3>
+          <h3 className="font-h3 text-h3 text-on-surface">Penugasan Petugas - {selectedPrayer}</h3>
           <span className="bg-secondary-container/30 text-on-secondary-container px-3 py-1 rounded-md font-label-sm text-label-sm border border-secondary-container/50">
             {formatDate(new Date(selectedDate))}
           </span>
         </div>
 
         <div className="p-6">
-          {!jadwalBulanan ? (
+          {!jadwalItem ? (
+            <div className="text-center py-8">
+              <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-4">calendar_today</span>
+              <p className="font-body-md text-body-md text-on-surface-variant">Belum ada penugasan untuk sholat ini.</p>
+            </div>
+          ) : !jadwalBulanan ? (
             <div className="text-center py-8">
               <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-4">calendar_today</span>
               <p className="font-body-md text-body-md text-on-surface-variant">Belum ada penugasan untuk sholat ini pada tanggal tersebut.</p>
               <p className="font-body-sm text-body-sm text-on-surface-variant mt-2">Buat penugasan terlebih dahulu di menu Jadwal Per Bulan.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {assignedPersonnel.map((person) => {
-                const current = presensiRecords[person.id] || {}
-                const status = current.status || ''
-
-                return (
-                  <div key={person.id} className="flex items-center justify-between p-4 rounded-lg bg-surface-container-high/50">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold uppercase ${
-                        person.role === 'imam' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'
-                      }`}>
-                        {getInitials(getPetugasName(person.id))}
-                      </div>
-                      <div>
-                        <p className="font-body-md font-semibold text-on-surface">{getPetugasName(person.id)}</p>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant">{person.label}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {attendanceStatus.map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() => handleStatusChange(person.id, option.value)}
-                          className={`px-4 py-2 rounded-lg font-label-sm text-label-sm transition-colors ${
-                            status === option.value
-                              ? option.color
-                              : 'bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Kolom Muadzin */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700">
+                    <span className="material-symbols-outlined text-sm">volume_up</span>
                   </div>
-                )
-              })}
+                  <h4 className="font-h3 text-h3 text-on-surface">Muadzin</h4>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="font-label-md text-label-md text-on-surface block mb-1">Utama</label>
+                    <select
+                      className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                      value={penugasan.muadzin_utama_id || ''}
+                      onChange={(e) => handleChange('muadzin_utama_id', e.target.value)}
+                    >
+                      <option value="">-- Pilih Muadzin --</option>
+                      {muadzinList.map((p) => (
+                        <option key={p.id} value={p.id}>{p.nama}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-label-md text-label-md text-on-surface block mb-1">Cadangan (Imam)</label>
+                    <select
+                      className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                      value={penugasan.muadzin_cadangan_id || ''}
+                      onChange={(e) => handleChange('muadzin_cadangan_id', e.target.value)}
+                    >
+                      <option value="">-- Pilih Imam sebagai cadangan --</option>
+                      {imamList.map((p) => (
+                        <option key={p.id} value={p.id}>{p.nama}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Kolom Imam */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-700">
+                    <span className="material-symbols-outlined text-sm">mosque</span>
+                  </div>
+                  <h4 className="font-h3 text-h3 text-on-surface">Imam</h4>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="font-label-md text-label-md text-on-surface block mb-1">Utama</label>
+                    <select
+                      className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                      value={penugasan.imam_utama_id || ''}
+                      onChange={(e) => handleChange('imam_utama_id', e.target.value)}
+                    >
+                      <option value="">-- Pilih Imam --</option>
+                      {imamList.map((p) => (
+                        <option key={p.id} value={p.id}>{p.nama}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-label-md text-label-md text-on-surface block mb-1">Cadangan (Muadzin)</label>
+                    <select
+                      className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                      value={penugasan.imam_cadangan_id || ''}
+                      onChange={(e) => handleChange('imam_cadangan_id', e.target.value)}
+                    >
+                      <option value="">-- Pilih Muadzin sebagai cadangan --</option>
+                      {muadzinList.map((p) => (
+                        <option key={p.id} value={p.id}>{p.nama}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
