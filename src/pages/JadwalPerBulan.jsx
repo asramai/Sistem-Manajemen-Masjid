@@ -75,9 +75,8 @@ export default function JadwalPerBulan() {
   }
 
   const handleDateClick = (day) => {
-    const date = new Date(selectedYear, selectedMonth, day)
-    const dateStr = date.toISOString().split('T')[0]
-    
+    const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
     setSelectedDates((prev) => {
       if (prev.includes(dateStr)) {
         return prev.filter((d) => d !== dateStr)
@@ -157,7 +156,7 @@ export default function JadwalPerBulan() {
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(selectedYear, selectedMonth, day)
       const dayOfWeek = currentDate.getDay()
-      const dateStr = currentDate.toISOString().split('T')[0]
+      const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
       if (selectedSholat.includes('Jumat') && dayOfWeek !== 5) continue
 
@@ -212,9 +211,10 @@ export default function JadwalPerBulan() {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(selectedYear, selectedMonth, day)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const isSelected = selectedDates.includes(dateStr)
-      const isToday = dateStr === new Date().toISOString().split('T')[0]
+      const today = new Date()
+      const isToday = dateStr === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
       const jadwalDate = jadwalBulanan.filter((j) => j.tanggal === dateStr)
 
       days.push(
