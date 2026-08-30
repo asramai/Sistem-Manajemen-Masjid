@@ -61,6 +61,7 @@ export default function HomePage() {
   const [presensiList, setPresensiList] = useState([])
   const [izinList, setIzinList] = useState([])
   const [biayaMap, setBiayaMap] = useState({})
+  const [jadwalMap, setJadwalMap] = useState({})
 
   const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
   const [currentPetugasId, setCurrentPetugasId] = useState(null)
@@ -102,9 +103,10 @@ export default function HomePage() {
 
   const fetchData = async () => {
     setLoading(true)
-    const [petugasResult, jadwalResult, presensiResult, izinResult, biayaResult] = await Promise.all([
+    const [petugasResult, jadwalResult, jadwalMasterResult, presensiResult, izinResult, biayaResult] = await Promise.all([
       supabase.from('petugas').select('*').eq('is_active', true).order('nama'),
       supabase.from('jadwal_bulanan').select('*').eq('tanggal', today),
+      supabase.from('jadwal').select('*'),
       supabase.from('presensi').select('*').eq('tanggal', today),
       supabase.from('konfirmasi_izin').select('*').order('tanggal', { ascending: false }).limit(10),
       supabase.from('biaya_transport').select('*'),
@@ -112,14 +114,22 @@ export default function HomePage() {
 
     if (petugasResult.error) console.error('Error fetching petugas:', petugasResult.error)
     if (jadwalResult.error) console.error('Error fetching jadwal:', jadwalResult.error)
+    if (jadwalMasterResult.error) console.error('Error fetching jadwal master:', jadwalMasterResult.error)
     if (presensiResult.error) console.error('Error fetching presensi:', presensiResult.error)
     if (izinResult.error) console.error('Error fetching izin:', izinResult.error)
     if (biayaResult.error) console.error('Error fetching biaya:', biayaResult.error)
 
     setPetugasList(petugasResult.data || [])
     setJadwalBulanan(jadwalResult.data || [])
+
+    const jadwalMap = {}
+    ;(jadwalMasterResult.data || []).forEach((j) => {
+      jadwalMap[j.nama_sholat] = j.id
+    })
+
     setPresensiList(presensiResult.data || [])
     setIzinList(izinResult.data || [])
+    setJadwalMap(jadwalMap)
 
     const map = {}
     ;(biayaResult.data || []).forEach((b) => {
@@ -237,7 +247,8 @@ export default function HomePage() {
                 </div>
               ) : (
                 todayJadwal.map((jadwal) => {
-                  const presensiCount = todayPresensi.filter((pr) => pr.jadwal_id === jadwal.id).length
+                  const masterJadwalId = jadwalMap[jadwal.nama_sholat]
+                  const presensiCount = masterJadwalId ? todayPresensi.filter((pr) => pr.jadwal_id === masterJadwalId).length : 0
                   return (
                     <div key={jadwal.id} className="p-4 hover:bg-surface-container-low transition-colors">
                       <div className="flex items-center justify-between">
@@ -316,7 +327,8 @@ export default function HomePage() {
                 todayJadwal.map((jadwal) => {
                   const isAssigned = jadwal.imam_utama_id === currentPetugasId || jadwal.imam_cadangan_id === currentPetugasId ||
                                     jadwal.muadzin_utama_id === currentPetugasId || jadwal.muadzin_cadangan_id === currentPetugasId
-                  const alreadyPresensi = myPresensi.some((pr) => pr.jadwal_id === jadwal.id)
+                  const masterJadwalId = jadwalMap[jadwal.nama_sholat]
+                  const alreadyPresensi = masterJadwalId ? myPresensi.some((pr) => pr.jadwal_id === masterJadwalId) : false
 
                   return (
                     <div key={jadwal.id} className="p-4 hover:bg-surface-container-low transition-colors">
