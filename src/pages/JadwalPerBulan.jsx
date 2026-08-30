@@ -70,7 +70,8 @@ export default function JadwalPerBulan() {
   }
 
   const getFirstDayOfMonth = () => {
-    return new Date(selectedYear, selectedMonth, 1).getDay()
+    const day = new Date(selectedYear, selectedMonth, 1).getDay()
+    return (day + 6) % 7
   }
 
   const handleDateClick = (day) => {
