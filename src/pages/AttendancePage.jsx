@@ -53,7 +53,7 @@ export default function AttendancePage() {
       fetchAssignment()
       fetchSavedPresensi()
     }
-  }, [selectedDate, selectedPrayer, jadwalItem])
+  }, [selectedDate, selectedPrayer, jadwalItem, petugas])
 
   const fetchSavedPresensi = async () => {
     if (!jadwalItem) return
@@ -205,6 +205,23 @@ export default function AttendancePage() {
       return
     }
 
+    const uniqueRecords = []
+    const seenIds = new Set()
+    let hasDuplicate = false
+
+    for (const record of records) {
+      if (seenIds.has(record.petugas_id)) {
+        hasDuplicate = true
+      } else {
+        seenIds.add(record.petugas_id)
+        uniqueRecords.push(record)
+      }
+    }
+
+    if (hasDuplicate) {
+      alert('Peringatan: Ada petugas yang dipilih lebih dari satu role. Hanya satu record per petugas yang akan disimpan.')
+    }
+
     try {
       const { error: deleteError } = await supabase
         .from('presensi')
@@ -218,7 +235,7 @@ export default function AttendancePage() {
         return
       }
 
-      const promises = records.map((record) =>
+      const promises = uniqueRecords.map((record) =>
         supabase.from('presensi').upsert(record, { onConflict: ['petugas_id', 'jadwal_id', 'tanggal'] })
       )
 
