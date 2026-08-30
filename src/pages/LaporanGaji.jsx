@@ -180,7 +180,7 @@ export default function LaporanGaji() {
         let alpha = 0
         let transport = 0
 
-        if (presensiData) {
+        if (presensiData && presensiData.length > 0) {
           const jadwalIds = [...new Set(presensiData.filter((pr) => pr.status === 'hadir').map((r) => r.jadwal_id))]
           const { data: jadwalData } = await supabase
             .from('jadwal')
@@ -195,14 +195,16 @@ export default function LaporanGaji() {
           presensiData.forEach((pr) => {
             if (pr.status === 'hadir') {
               const namaSholat = jadwalMap[pr.jadwal_id]
+
               if (namaSholat) {
                 const jadwalBulanan = jadwalBulananMap[pr.tanggal]?.[namaSholat]
+
                 if (jadwalBulanan) {
                   let peran = null
-                  if (jadwalBulanan.imam_utama_id === p.id || jadwalBulanan.imam_cadangan_id === p.id) {
-                    peran = 'imam'
-                  } else if (jadwalBulanan.muadzin_utama_id === p.id || jadwalBulanan.muadzin_cadangan_id === p.id) {
+                  if (jadwalBulanan.muadzin_utama_id === p.id || jadwalBulanan.muadzin_cadangan_id === p.id) {
                     peran = 'muadzin'
+                  } else if (jadwalBulanan.imam_utama_id === p.id || jadwalBulanan.imam_cadangan_id === p.id) {
+                    peran = 'imam'
                   }
 
                   if (peran) {
