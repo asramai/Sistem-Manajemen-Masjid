@@ -37,6 +37,7 @@ export default function AttendancePage() {
     imam_utama_id: '',
     imam_cadangan_id: '',
   })
+  const [savedPresensi, setSavedPresensi] = useState([])
 
   const imamList = useMemo(() => petugas.filter((p) => p.role === 'imam'), [petugas])
   const muadzinList = useMemo(() => petugas.filter((p) => p.role === 'muadzin'), [petugas])
@@ -50,8 +51,27 @@ export default function AttendancePage() {
   useEffect(() => {
     if (jadwalItem) {
       fetchAssignment()
+      fetchSavedPresensi()
     }
   }, [selectedDate, selectedPrayer, jadwalItem])
+
+  const fetchSavedPresensi = async () => {
+    if (!jadwalItem) return
+
+    const { data, error } = await supabase
+      .from('presensi')
+      .select('*')
+      .eq('jadwal_id', jadwalItem.id)
+      .eq('tanggal', selectedDate)
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching saved presensi:', error)
+      return
+    }
+
+    setSavedPresensi(data || [])
+  }
 
   const fetchData = async () => {
     setLoading(true)
@@ -157,6 +177,7 @@ export default function AttendancePage() {
         alert('Gagal menyimpan beberapa data')
       } else {
         alert(`Presensi ${selectedPrayer} berhasil disimpan!`)
+        fetchSavedPresensi()
       }
     } catch (err) {
       alert('Terjadi kesalahan saat menyimpan')
@@ -330,6 +351,45 @@ export default function AttendancePage() {
           </button>
         </div>
       </div>
+
+      {savedPresensi.length > 0 && (
+        <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+          <div className="p-6 border-b border-outline-variant bg-surface-bright">
+            <h3 className="font-h3 text-h3 text-on-surface">Data Presensi Tersimpan</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-bright border-b border-outline-variant">
+                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tanggal</th>
+                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Shalat</th>
+                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Muadzin</th>
+                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Imam</th>
+                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Presensi</th>
+                </tr>
+              </thead>
+              <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
+                {savedPresensi.map((record) => {
+                  const muadzin = record.muadzin_utama_id ? petugas.find((p) => p.id === record.muadzin_utama_id)?.nama : '-'
+                  const imam = record.imam_utama_id ? petugas.find((p) => p.id === record.imam_utama_id)?.nama : '-'
+                  const presensiDate = new Date(record.created_at)
+                  const presensiTime = presensiDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
+                  return (
+                    <tr key={record.id} className="hover:bg-surface-container-low transition-colors">
+                      <td className="p-4">{formatDate(new Date(record.tanggal))}</td>
+                      <td className="p-4">{selectedPrayer}</td>
+                      <td className="p-4">{muadzin}</td>
+                      <td className="p-4">{imam}</td>
+                      <td className="p-4">{presensiTime}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
