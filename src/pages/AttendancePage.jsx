@@ -286,8 +286,8 @@ export default function AttendancePage() {
       {/* Assignment Card */}
       <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
         <div className="p-4 md:p-6 border-b border-outline-variant bg-surface-bright flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <h3 className="font-h3 text-h3 text-on-surface text-center sm:text-left">Penugasan Petugas - {selectedPrayer}</h3>
-          <span className="bg-secondary-container/30 text-on-secondary-container px-3 py-1 rounded-md font-label-sm text-label-sm border border-secondary-container/50 self-center sm:self-auto">
+          <h3 className="font-h3 text-h3 text-on-surface text-left">Penugasan Petugas - {selectedPrayer}</h3>
+          <span className="bg-secondary-container/30 text-on-secondary-container px-3 py-1 rounded-md font-label-sm text-label-sm border border-secondary-container/50 self-start sm:self-auto">
             {formatDate(new Date(selectedDate))}
           </span>
         </div>
