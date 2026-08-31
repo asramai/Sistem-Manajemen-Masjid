@@ -194,71 +194,73 @@ export default function CetakLaporanGaji() {
 
       <div className="max-w-4xl mx-auto p-8 print:p-0">
         {/* Kop Surat */}
-        <div className="text-center mb-8 border-b-2 border-black pb-6">
+        <div className="flex items-center gap-6 mb-6 border-b-2 border-black pb-6">
           {profil?.logo_url && (
-            <img src={profil.logo_url} alt="Logo Masjid" className="w-20 h-20 object-contain mx-auto mb-4" />
+            <img src={profil.logo_url} alt="Logo Masjid" className="w-24 h-24 object-contain shrink-0" />
           )}
-          <h1 className="text-2xl font-bold mb-2">{profil?.nama_masjid || 'Nama Masjid'}</h1>
-          <p className="text-sm mb-1">{profil?.alamat || 'Alamat Masjid'}</p>
-          <p className="text-sm">Telp. {profil?.nomor_kontak || '-'}</p>
+          <div className="text-center flex-1">
+            <h1 className="text-xl font-bold mb-1">{profil?.nama_masjid || 'Nama Masjid'}</h1>
+            <p className="text-xs mb-0.5">{profil?.alamat || 'Alamat Masjid'}</p>
+            <p className="text-xs">Telp. {profil?.nomor_kontak || '-'}</p>
+          </div>
         </div>
 
         {/* Judul */}
-        <div className="text-center mb-8">
-          <h2 className="text-xl font-bold mb-2">DAFTAR PENERIMA GAJI DAN BIAYA PENGGANTI TRANSPORT PETUGAS IBADAH</h2>
-          <h3 className="text-lg font-semibold">Bulan {months[bulan]} {tahun}</h3>
+        <div className="text-center mb-6">
+          <h2 className="text-lg font-bold mb-1">DAFTAR PENERIMA GAJI DAN BIAYA PENGGANTI TRANSPORT PETUGAS IBADAH</h2>
+          <h3 className="text-base font-semibold">Bulan {months[bulan]} {tahun}</h3>
         </div>
 
         {/* Tabel */}
-        <table className="w-full border-collapse border-2 border-black mb-6">
+        <table className="w-full border-collapse border-2 border-black mb-6 text-[11px]">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border-2 border-black p-2 w-12 text-center">NO</th>
-              <th className="border-2 border-black p-2 text-center">NAMA PETUGAS</th>
-              <th className="border-2 border-black p-2 text-center">TUGAS</th>
-              <th className="border-2 border-black p-2 text-right">GAJI POKOK</th>
-              <th className="border-2 border-black p-2 text-right">TRANSPORT</th>
-              <th className="border-2 border-black p-2 text-right">JUMLAH</th>
-              <th className="border-2 border-black p-2 text-center">TANDA TANGAN</th>
+              <th className="border-2 border-black p-1.5 w-10 text-center font-semibold">NO</th>
+              <th className="border-2 border-black p-1.5 text-center font-semibold">NAMA PETUGAS</th>
+              <th className="border-2 border-black p-1.5 text-center font-semibold">TUGAS</th>
+              <th className="border-2 border-black p-1.5 text-right font-semibold">GAJI POKOK</th>
+              <th className="border-2 border-black p-1.5 text-right font-semibold">TRANSPORT</th>
+              <th className="border-2 border-black p-1.5 text-right font-semibold">JUMLAH</th>
+              <th className="border-2 border-black p-1.5 text-center font-semibold">TANDA TANGAN</th>
             </tr>
           </thead>
           <tbody>
             {roster.map((item, index) => (
               <tr key={index}>
-                <td className="border-2 border-black p-2 text-center">{index + 1}</td>
-                <td className="border-2 border-black p-2">{item.nama}</td>
-                <td className="border-2 border-black p-2 text-center capitalize">{item.role}</td>
-                <td className="border-2 border-black p-2 text-right">{formatCurrency(item.gaji)}</td>
-                <td className="border-2 border-black p-2 text-right">{formatCurrency(item.transport)}</td>
-                <td className="border-2 border-black p-2 text-right font-semibold">{formatCurrency(item.total)}</td>
-                <td className="border-2 border-black p-2 h-16"></td>
+                <td className="border-2 border-black p-1.5 text-center">{index + 1}</td>
+                <td className="border-2 border-black p-1.5">{item.nama}</td>
+                <td className="border-2 border-black p-1.5 text-center capitalize">{item.role}</td>
+                <td className="border-2 border-black p-1.5 text-right tabular-nums">{formatCurrency(item.gaji)}</td>
+                <td className="border-2 border-black p-1.5 text-right tabular-nums">{formatCurrency(item.transport)}</td>
+                <td className="border-2 border-black p-1.5 text-right font-semibold tabular-nums">{formatCurrency(item.total)}</td>
+                <td className="border-2 border-black p-1.5 h-20"></td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="bg-gray-100 font-semibold">
-              <td colSpan="3" className="border-2 border-black p-2 text-center">TOTAL</td>
-              <td className="border-2 border-black p-2 text-right">{formatCurrency(totalGaji)}</td>
-              <td className="border-2 border-black p-2 text-right">{formatCurrency(totalTransport)}</td>
-              <td className="border-2 border-black p-2 text-right">{formatCurrency(grandTotal)}</td>
-              <td className="border-2 border-black p-2"></td>
+              <td colSpan="3" className="border-2 border-black p-1.5 text-center">TOTAL</td>
+              <td className="border-2 border-black p-1.5 text-right tabular-nums">{formatCurrency(totalGaji)}</td>
+              <td className="border-2 border-black p-1.5 text-right tabular-nums">{formatCurrency(totalTransport)}</td>
+              <td className="border-2 border-black p-1.5 text-right tabular-nums">{formatCurrency(grandTotal)}</td>
+              <td className="border-2 border-black p-1.5"></td>
             </tr>
           </tfoot>
         </table>
 
         {/* Tanda Tangan */}
-        <div className="flex justify-between mt-12">
-          <div className="w-1/2 pr-8">
-            <p className="font-semibold mb-4">Mengetahui,</p>
-            <p className="font-semibold">Ketua Takmir</p>
-            <div className="h-16 border-b-2 border-black mb-2"></div>
-            <p className="font-semibold">{profil?.ketua_takmir || '(Nama Ketua Takmir)'}</p>
+        <div className="flex justify-between mt-16">
+          <div className="w-5/12 pr-4">
+            <p className="font-semibold mb-10 text-xs">Mengetahui,</p>
+            <p className="font-semibold text-xs">Ketua Takmir</p>
+            <div className="h-20 border-b-2 border-black mb-1"></div>
+            <p className="font-semibold text-xs">{profil?.ketua_takmir || '(Nama Ketua Takmir)'}</p>
           </div>
-          <div className="w-1/2 pl-8">
-            <p className="font-semibold mb-4">Marisa, {formatDate(new Date())}</p>
-            <p className="font-semibold">Bendahara</p>
-            <div className="h-16 border-b-2 border-black mb-2"></div>
-            <p className="font-semibold">{profil?.bendahara || '(Nama Bendahara)'}</p>
+          <div className="w-5/12 pl-4">
+            <p className="font-semibold mb-10 text-xs">Marisa, {formatDate(new Date())}</p>
+            <p className="font-semibold text-xs">Bendahara</p>
+            <div className="h-20 border-b-2 border-black mb-1"></div>
+            <p className="font-semibold text-xs">{profil?.bendahara || '(Nama Bendahara)'}</p>
           </div>
         </div>
       </div>
