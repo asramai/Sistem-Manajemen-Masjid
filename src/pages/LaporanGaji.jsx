@@ -57,7 +57,9 @@ function RosterTable({ roster }) {
               <th className="p-4 font-semibold text-center">Hadir Tanpa Penugasan</th>
               <th className="p-4 font-semibold text-center">Izin</th>
               <th className="p-4 font-semibold text-center">Alpha</th>
-              <th className="p-4 font-semibold text-right">Jumlah Transport</th>
+              <th className="p-4 font-semibold text-right">Transport Muadzin</th>
+              <th className="p-4 font-semibold text-right">Transport Imam</th>
+              <th className="p-4 font-semibold text-right">Total Transport</th>
               <th className="p-4 font-semibold text-right">Gaji Pokok</th>
               <th className="p-4 font-semibold text-right">Total Diterima</th>
             </tr>
@@ -109,6 +111,8 @@ function RosterTable({ roster }) {
                     {item.alpha || '-'}
                   </span>
                 </td>
+                <td className="p-4 text-right tabular-nums text-on-surface-variant">{formatCurrency(item.transportMuadzin)}</td>
+                <td className="p-4 text-right tabular-nums text-on-surface-variant">{formatCurrency(item.transportImam)}</td>
                 <td className="p-4 text-right tabular-nums text-on-surface-variant">{formatCurrency(item.transport)}</td>
                 <td className="p-4 text-right tabular-nums text-on-surface-variant">{formatCurrency(item.gaji)}</td>
                 <td className="p-4 text-right font-medium text-primary tabular-nums">{formatCurrency(item.total)}</td>
@@ -215,6 +219,8 @@ export default function LaporanGaji() {
         let izin = 0
         let alpha = 0
         let transport = 0
+        let transportMuadzin = 0
+        let transportImam = 0
 
         if (presensiData && presensiData.length > 0) {
           const jadwalIds = [...new Set(presensiData.filter((pr) => pr.status === 'hadir').map((r) => r.jadwal_id))]
@@ -255,8 +261,14 @@ export default function LaporanGaji() {
                   const nominal = map[namaSholat]?.[peran] || 0
                   transport += nominal
 
-                  if (peran === 'imam') hadirImam++
-                  if (peran === 'muadzin') hadirMuadzin++
+                  if (peran === 'imam') {
+                    hadirImam++
+                    transportImam += nominal
+                  }
+                  if (peran === 'muadzin') {
+                    hadirMuadzin++
+                    transportMuadzin += nominal
+                  }
                 }
               }
             } else if (pr.status === 'izin') {
@@ -285,6 +297,8 @@ export default function LaporanGaji() {
           hadir_tanpa_penugasan: hadirTanpaPenugasan,
           izin: izin || '-',
           alpha: alpha || '-',
+          transportMuadzin,
+          transportImam,
           transport,
           gaji,
           total: transport + gaji,
@@ -309,6 +323,8 @@ export default function LaporanGaji() {
 
   const totalGaji = filteredRoster.reduce((sum, item) => sum + item.gaji, 0)
   const totalTransport = filteredRoster.reduce((sum, item) => sum + item.transport, 0)
+  const totalTransportMuadzin = filteredRoster.reduce((sum, item) => sum + item.transportMuadzin, 0)
+  const totalTransportImam = filteredRoster.reduce((sum, item) => sum + item.transportImam, 0)
   const totalPetugas = filteredRoster.length
   const avgKehadiran = filteredRoster.length > 0 ? Math.round(filteredRoster.reduce((sum, item) => sum + item.hadir_muadzin + item.hadir_imam, 0) / filteredRoster.length) : 0
 
