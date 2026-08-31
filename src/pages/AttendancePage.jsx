@@ -38,6 +38,7 @@ export default function AttendancePage() {
     imam_cadangan_id: '',
   })
   const [savedPresensi, setSavedPresensi] = useState([])
+  const [presensiWarning, setPresensiWarning] = useState('')
 
   const imamList = useMemo(() => petugas.filter((p) => p.role === 'imam'), [petugas])
   const muadzinList = useMemo(() => petugas.filter((p) => p.role === 'muadzin'), [petugas])
@@ -81,7 +82,10 @@ export default function AttendancePage() {
 
         let role = null
         let nama = '-'
+        let hasAssignment = false
+
         if (jadwalBulanan) {
+          hasAssignment = true
           if (jadwalBulanan.muadzin_utama_id === record.petugas_id) {
             role = 'Muadzin Utama'
             nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
@@ -97,6 +101,14 @@ export default function AttendancePage() {
           }
         }
 
+        if (!hasAssignment) {
+          const pengganti = petugas.find((p) => p.id === record.petugas_id)
+          if (pengganti) {
+            nama = pengganti.nama
+            role = pengganti.role === 'imam' ? 'Imam' : pengganti.role === 'muadzin' ? 'Muadzin' : 'Petugas'
+          }
+        }
+
         const presensiDate = new Date(record.created_at)
         const presensiTime = presensiDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
@@ -105,9 +117,17 @@ export default function AttendancePage() {
           nama,
           role,
           presensiTime,
+          hasAssignment,
         }
       })
     )
+
+    const warningCount = enriched.filter((r) => !r.hasAssignment).length
+    if (warningCount > 0) {
+      setPresensiWarning(`Peringatan: ${warningCount} presensi tanpa penugasan resmi di jadwal bulanan. Data tetap disimpan dan akan dihitung.`)
+    } else {
+      setPresensiWarning('')
+    }
 
     setSavedPresensi(enriched)
   }
@@ -407,6 +427,12 @@ export default function AttendancePage() {
         <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
           <div className="p-4 md:p-6 border-b border-outline-variant bg-surface-bright">
             <h3 className="font-h3 text-h3 text-on-surface">Data Presensi Tersimpan</h3>
+            {presensiWarning && (
+              <p className="font-body-sm text-body-sm text-tertiary mt-2 flex items-center gap-2">
+                <span className="material-symbols-outlined text-base">warning</span>
+                {presensiWarning}
+              </p>
+            )}
           </div>
           <div className="overflow-x-auto">
             <div className="inline-block min-w-full align-middle">
@@ -415,18 +441,22 @@ export default function AttendancePage() {
                   <tr className="bg-surface-bright border-b border-outline-variant">
                     <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tanggal</th>
                     <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Shalat</th>
-                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Muadzin</th>
-                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Imam</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Petugas</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Peran</th>
                     <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Presensi</th>
                   </tr>
                 </thead>
                 <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
                   {savedPresensi.map((record) => (
-                    <tr key={record.id} className="hover:bg-surface-container-low transition-colors">
+                    <tr key={record.id} className={record.hasAssignment ? '' : 'bg-tertiary/5'}>
                       <td className="p-3 md:p-4 whitespace-nowrap">{formatDate(new Date(record.tanggal))}</td>
                       <td className="p-3 md:p-4 whitespace-nowrap">{selectedPrayer}</td>
-                      <td className="p-3 md:p-4 whitespace-nowrap">{record.role?.startsWith('Muadzin') ? record.nama : '-'}</td>
-                      <td className="p-3 md:p-4 whitespace-nowrap">{record.role?.startsWith('Imam') ? record.nama : '-'}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap font-medium">{record.nama}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap">
+                        <span className={record.hasAssignment ? 'text-on-surface' : 'text-tertiary font-medium'}>
+                          {record.role || '-'}
+                        </span>
+                      </td>
                       <td className="p-3 md:p-4 whitespace-nowrap">{record.presensiTime}</td>
                     </tr>
                   ))}

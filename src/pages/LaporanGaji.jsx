@@ -54,6 +54,7 @@ function RosterTable({ roster }) {
               <th className="p-4 font-semibold sticky left-0 bg-surface-bright z-10 w-64 shadow-[1px_0_0_0_#e2e2e2]">Nama &amp; Peran</th>
               <th className="p-4 font-semibold text-center">Hadir sebagai Muadzin</th>
               <th className="p-4 font-semibold text-center">Hadir sebagai Imam</th>
+              <th className="p-4 font-semibold text-center">Hadir Tanpa Penugasan</th>
               <th className="p-4 font-semibold text-center">Izin</th>
               <th className="p-4 font-semibold text-center">Alpha</th>
               <th className="p-4 font-semibold text-right">Jumlah Transport</th>
@@ -89,6 +90,11 @@ function RosterTable({ roster }) {
                 <td className="p-4 text-center">
                   <span className="inline-flex items-center justify-center bg-secondary-container text-on-secondary-container font-medium px-2.5 py-1 rounded-md min-w-[40px]">
                     {item.hadir_imam}
+                  </span>
+                </td>
+                <td className="p-4 text-center">
+                  <span className="inline-flex items-center justify-center bg-tertiary/20 text-tertiary font-medium px-2.5 py-1 rounded-md min-w-[40px]">
+                    {item.hadir_tanpa_penugasan || '-'}
                   </span>
                 </td>
                 <td className="p-4 text-center">
@@ -205,6 +211,7 @@ export default function LaporanGaji() {
 
         let hadirMuadzin = 0
         let hadirImam = 0
+        let hadirTanpaPenugasan = 0
         let izin = 0
         let alpha = 0
         let transport = 0
@@ -227,22 +234,29 @@ export default function LaporanGaji() {
 
               if (namaSholat) {
                 const jadwalBulanan = jadwalBulananMap[pr.tanggal]?.[namaSholat]
+                let peran = null
 
                 if (jadwalBulanan) {
-                  let peran = null
                   if (jadwalBulanan.muadzin_utama_id === p.id || jadwalBulanan.muadzin_cadangan_id === p.id) {
                     peran = 'muadzin'
                   } else if (jadwalBulanan.imam_utama_id === p.id || jadwalBulanan.imam_cadangan_id === p.id) {
                     peran = 'imam'
                   }
+                }
 
+                if (!peran) {
+                  peran = p.role === 'imam' ? 'imam' : p.role === 'muadzin' ? 'muadzin' : null
                   if (peran) {
-                    const nominal = map[namaSholat]?.[peran] || 0
-                    transport += nominal
-
-                    if (peran === 'imam') hadirImam++
-                    if (peran === 'muadzin') hadirMuadzin++
+                    hadirTanpaPenugasan++
                   }
+                }
+
+                if (peran) {
+                  const nominal = map[namaSholat]?.[peran] || 0
+                  transport += nominal
+
+                  if (peran === 'imam') hadirImam++
+                  if (peran === 'muadzin') hadirMuadzin++
                 }
               }
             } else if (pr.status === 'izin') {
@@ -268,6 +282,7 @@ export default function LaporanGaji() {
           initials: p.nama.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2),
           hadir_muadzin: hadirMuadzin,
           hadir_imam: hadirImam,
+          hadir_tanpa_penugasan: hadirTanpaPenugasan,
           izin: izin || '-',
           alpha: alpha || '-',
           transport,
