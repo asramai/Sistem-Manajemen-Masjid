@@ -248,7 +248,7 @@ export default function AttendancePage() {
       }
 
       const promises = records.map((record) =>
-        supabase.from('presensi').upsert(record, { onConflict: ['petugas_id', 'jadwal_id', 'tanggal'] })
+        supabase.from('presensi').upsert(record, { onConflict: ['petugas_id', 'jadwal_id', 'tanggal', 'peran'] })
       )
 
       const results = await Promise.all(promises)
