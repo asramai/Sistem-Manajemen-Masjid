@@ -248,6 +248,8 @@ export default function App() {
     navigate('/login')
   }
 
+  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+
   const isCetakLaporan = currentPath === '/cetak-laporan'
 
   return (
