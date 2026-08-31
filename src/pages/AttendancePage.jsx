@@ -248,14 +248,14 @@ export default function AttendancePage() {
   return (
     <div className="max-w-3xl mx-auto space-y-stack-lg">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-outline-variant pb-4 gap-4">
-        <div className="text-center md:text-left">
-          <h2 className="font-h1 text-h1 text-primary-container mb-2">Input Presensi Hari Ini</h2>
-          <p className="font-body-md text-on-surface-variant">Catat kehadiran petugas sholat fardhu.</p>
+      <div className="space-y-3 pb-4 border-b border-outline-variant">
+        <div>
+          <h2 className="font-h1 text-h1 text-primary-container mb-1">Input Presensi Hari Ini</h2>
+          <p className="font-body-sm text-body-sm text-on-surface-variant">Catat kehadiran petugas sholat fardhu.</p>
         </div>
-        <div className="relative w-full md:w-auto">
+        <div className="md:max-w-xs">
           <div className="flex items-center bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 focus-within:border-primary-container focus-within:ring-2 focus-within:ring-primary-container/20 transition-all">
-            <span className="material-symbols-outlined text-on-surface-variant mr-2 text-base">calendar_today</span>
+            <span className="material-symbols-outlined text-on-surface-variant mr-2 text-base shrink-0">calendar_today</span>
             <input
               className="bg-transparent border-none focus:ring-0 text-on-surface font-body-md w-full outline-none p-0 cursor-pointer"
               type="date"
@@ -408,7 +408,7 @@ export default function AttendancePage() {
           <div className="p-4 md:p-6 border-b border-outline-variant bg-surface-bright">
             <h3 className="font-h3 text-h3 text-on-surface">Data Presensi Tersimpan</h3>
           </div>
-          <div className="overflow-x-auto -mx-4 md:mx-0">
+          <div className="overflow-x-auto">
             <div className="inline-block min-w-full align-middle">
               <table className="w-full text-left border-collapse">
                 <thead>
