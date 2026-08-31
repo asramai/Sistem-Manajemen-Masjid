@@ -707,7 +707,27 @@ export default function UserManagement() {
             </div>
             <div>
               <label className="font-label-md text-label-md text-on-surface block mb-1.5">Logo URL</label>
-              <input name="logo_url" defaultValue={profilMasjid?.logo_url || ''} className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+              <div className="flex gap-2">
+                <input name="logo_url" id="logo_url" defaultValue={profilMasjid?.logo_url || ''} className="flex-1 px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+                <button type="button" onClick={() => document.getElementById('logo_file').click()} className="px-4 py-2.5 rounded-lg border border-outline-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md">
+                  Upload
+                </button>
+                <input id="logo_file" type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  try {
+                    const fileExt = 'png'
+                    const fileName = `${Math.random()}.${fileExt}`
+                    const filePath = `logo/${fileName}`
+                    const { error: uploadError } = await supabase.storage.from('logo').upload(filePath, file)
+                    if (uploadError) throw uploadError
+                    const { data } = supabase.storage.from('logo').getPublicUrl(filePath)
+                    document.getElementById('logo_url').value = data.publicUrl
+                  } catch (err) {
+                    alert('Gagal upload logo: ' + (err.message || err))
+                  }
+                }} />
+              </div>
             </div>
             <div>
               <label className="font-label-md text-label-md text-on-surface block mb-1.5">Ketua Takmir</label>
