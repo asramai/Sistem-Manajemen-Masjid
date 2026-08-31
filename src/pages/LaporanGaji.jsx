@@ -234,9 +234,9 @@ export default function LaporanGaji() {
 
               if (namaSholat) {
                 const jadwalBulanan = jadwalBulananMap[pr.tanggal]?.[namaSholat]
-                let peran = null
+                let peran = pr.peran || null
 
-                if (jadwalBulanan) {
+                if (!peran && jadwalBulanan) {
                   if (jadwalBulanan.muadzin_utama_id === p.id || jadwalBulanan.muadzin_cadangan_id === p.id) {
                     peran = 'muadzin'
                   } else if (jadwalBulanan.imam_utama_id === p.id || jadwalBulanan.imam_cadangan_id === p.id) {

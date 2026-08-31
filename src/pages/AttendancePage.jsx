@@ -73,40 +73,45 @@ export default function AttendancePage() {
 
     const enriched = await Promise.all(
       (data || []).map(async (record) => {
-        const { data: jadwalBulanan } = await supabase
-          .from('jadwal_bulanan')
-          .select('*')
-          .eq('tanggal', record.tanggal)
-          .eq('nama_sholat', selectedPrayer)
-          .maybeSingle()
-
-        let role = null
+        let role = record.peran || null
         let nama = '-'
         let hasAssignment = false
 
-        if (jadwalBulanan) {
-          hasAssignment = true
-          if (jadwalBulanan.muadzin_utama_id === record.petugas_id) {
-            role = 'Muadzin Utama'
-            nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
-          } else if (jadwalBulanan.muadzin_cadangan_id === record.petugas_id) {
-            role = 'Muadzin Cadangan'
-            nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
-          } else if (jadwalBulanan.imam_utama_id === record.petugas_id) {
-            role = 'Imam Utama'
-            nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
-          } else if (jadwalBulanan.imam_cadangan_id === record.petugas_id) {
-            role = 'Imam Cadangan'
-            nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
-          }
-        }
+        if (!role) {
+          const { data: jadwalBulanan } = await supabase
+            .from('jadwal_bulanan')
+            .select('*')
+            .eq('tanggal', record.tanggal)
+            .eq('nama_sholat', selectedPrayer)
+            .maybeSingle()
 
-        if (!hasAssignment) {
-          const pengganti = petugas.find((p) => p.id === record.petugas_id)
-          if (pengganti) {
-            nama = pengganti.nama
-            role = pengganti.role === 'imam' ? 'Imam' : pengganti.role === 'muadzin' ? 'Muadzin' : 'Petugas'
+          if (jadwalBulanan) {
+            hasAssignment = true
+            if (jadwalBulanan.muadzin_utama_id === record.petugas_id) {
+              role = 'Muadzin Utama'
+              nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
+            } else if (jadwalBulanan.muadzin_cadangan_id === record.petugas_id) {
+              role = 'Muadzin Cadangan'
+              nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
+            } else if (jadwalBulanan.imam_utama_id === record.petugas_id) {
+              role = 'Imam Utama'
+              nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
+            } else if (jadwalBulanan.imam_cadangan_id === record.petugas_id) {
+              role = 'Imam Cadangan'
+              nama = petugas.find((p) => p.id === record.petugas_id)?.nama || '-'
+            }
           }
+
+          if (!hasAssignment) {
+            const pengganti = petugas.find((p) => p.id === record.petugas_id)
+            if (pengganti) {
+              nama = pengganti.nama
+              role = pengganti.role === 'imam' ? 'Imam' : pengganti.role === 'muadzin' ? 'Muadzin' : 'Petugas'
+            }
+          }
+        } else {
+          const pengganti = petugas.find((p) => p.id === record.petugas_id)
+          nama = pengganti?.nama || '-'
         }
 
         const presensiDate = new Date(record.created_at)
@@ -198,24 +203,28 @@ export default function AttendancePage() {
         jadwal_id: jadwalItem.id,
         tanggal: selectedDate,
         status: 'hadir',
+        peran: 'muadzin',
       },
       {
         petugas_id: penugasan.muadzin_cadangan_id,
         jadwal_id: jadwalItem.id,
         tanggal: selectedDate,
         status: 'hadir',
+        peran: 'muadzin',
       },
       {
         petugas_id: penugasan.imam_utama_id,
         jadwal_id: jadwalItem.id,
         tanggal: selectedDate,
         status: 'hadir',
+        peran: 'imam',
       },
       {
         petugas_id: penugasan.imam_cadangan_id,
         jadwal_id: jadwalItem.id,
         tanggal: selectedDate,
         status: 'hadir',
+        peran: 'imam',
       },
     ].filter((r) => r.petugas_id)
 
