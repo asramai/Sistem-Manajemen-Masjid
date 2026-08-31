@@ -204,7 +204,7 @@ export default function LaporanGaji() {
       (petugasResult.data || []).map(async (p) => {
         const { data: presensiData } = await supabase
           .from('presensi')
-          .select('status, jadwal_id, tanggal')
+          .select('status, jadwal_id, tanggal, peran')
           .eq('petugas_id', p.id)
           .gte('tanggal', `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`)
           .lt('tanggal', `${selectedYear}-${String(selectedMonth + 2 > 12 ? selectedMonth + 2 - 12 : selectedMonth + 2).padStart(2, '0')}-01`)
