@@ -247,9 +247,17 @@ export default function AttendancePage() {
         return
       }
 
-      const promises = records.map((record) =>
-        supabase.from('presensi').upsert(record, { onConflict: ['petugas_id', 'jadwal_id', 'tanggal', 'peran'] })
-      )
+      const promises = records.map(async (record) => {
+        await supabase
+          .from('presensi')
+          .delete()
+          .eq('petugas_id', record.petugas_id)
+          .eq('jadwal_id', record.jadwal_id)
+          .eq('tanggal', record.tanggal)
+          .eq('peran', record.peran)
+
+        return supabase.from('presensi').insert(record)
+      })
 
       const results = await Promise.all(promises)
       const hasError = results.some((r) => r.error)
