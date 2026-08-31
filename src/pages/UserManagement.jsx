@@ -473,7 +473,7 @@ export default function UserManagement() {
   const [petugasList, setPetugasList] = useState([])
   const [profilMasjid, setProfilMasjid] = useState(null)
   const [savingProfil, setSavingProfil] = useState(false)
-  const [search, setSearch] = useState('')
+  const [currentTab, setCurrentTab] = useState('identitas')
   const [loading, setLoading] = useState(true)
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -512,15 +512,9 @@ export default function UserManagement() {
     setLoading(false)
   }
 
-  const filteredUsers = users.filter((u) =>
-    u.nama.toLowerCase().includes(search.toLowerCase()) ||
-    u.role.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredUsers = users
 
-  const filteredPetugas = petugasList.filter((p) =>
-    p.nama.toLowerCase().includes(search.toLowerCase()) ||
-    p.role.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredPetugas = petugasList
 
   const handleRoleChange = async (id, newRole) => {
     const { error } = await supabase
@@ -611,8 +605,8 @@ export default function UserManagement() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
-          <h1 className="font-h1 text-h1 text-on-surface mb-2">Manajemen Pengguna &amp; Petugas</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">Kelola peran, status, dan data detail petugas Masjid Pohuwato.</p>
+          <h1 className="font-h1 text-h1 text-on-surface mb-2">Profil &amp; Manajemen</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant">Kelola identitas masjid, petugas ibadah, dan pengguna sistem.</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -622,189 +616,179 @@ export default function UserManagement() {
             <span className="material-symbols-outlined">logout</span>
             Logout
           </button>
-          <button
-            onClick={openAdd}
-            className="bg-primary text-on-primary hover:bg-primary-container transition-colors duration-200 px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:shadow-md"
-          >
-            <span className="material-symbols-outlined">add</span>
-            Tambah Petugas Baru
-          </button>
-        </div>
-      </div>
-
-      {/* Profil Masjid */}
-      <div className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 mb-8">
-        <h3 className="font-h3 text-h3 text-on-surface mb-4">Identitas Masjid (Kop Surat)</h3>
-        <form onSubmit={handleSaveProfil} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
-            <label className="font-label-md text-label-md text-on-surface block mb-1">Nama Masjid</label>
-            <input name="nama_masjid" defaultValue={profilMasjid?.nama_masjid || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" required />
-          </div>
-          <div className="md:col-span-2">
-            <label className="font-label-md text-label-md text-on-surface block mb-1">Alamat</label>
-            <textarea name="alamat" defaultValue={profilMasjid?.alamat || ''} rows="2" className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"></textarea>
-          </div>
-          <div>
-            <label className="font-label-md text-label-md text-on-surface block mb-1">Nomor Kontak</label>
-            <input name="nomor_kontak" defaultValue={profilMasjid?.nomor_kontak || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
-          </div>
-          <div>
-            <label className="font-label-md text-label-md text-on-surface block mb-1">Logo URL</label>
-            <input name="logo_url" defaultValue={profilMasjid?.logo_url || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
-          </div>
-          <div>
-            <label className="font-label-md text-label-md text-on-surface block mb-1">Ketua Takmir</label>
-            <input name="ketua_takmir" defaultValue={profilMasjid?.ketua_takmir || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
-          </div>
-          <div>
-            <label className="font-label-md text-label-md text-on-surface block mb-1">Sekretaris</label>
-            <input name="sekretaris" defaultValue={profilMasjid?.sekretaris || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
-          </div>
-          <div>
-            <label className="font-label-md text-label-md text-on-surface block mb-1">Bendahara</label>
-            <input name="bendahara" defaultValue={profilMasjid?.bendahara || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
-          </div>
-          <div className="md:col-span-2 flex justify-end">
-            <button type="submit" disabled={savingProfil} className="bg-primary text-on-primary hover:bg-primary-container transition-colors px-6 py-2.5 rounded-lg font-label-md font-semibold disabled:opacity-50">
-              {savingProfil ? 'Menyimpan...' : 'Simpan Identitas Masjid'}
+          {currentTab === 'petugas' && (
+            <button
+              onClick={openAdd}
+              className="bg-primary text-on-primary hover:bg-primary-container transition-colors duration-200 px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:shadow-md"
+            >
+              <span className="material-symbols-outlined">add</span>
+              Tambah Petugas
             </button>
-          </div>
-        </form>
+          )}
+        </div>
       </div>
 
-      {/* Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Filters & Search */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6">
-            <h3 className="font-h3 text-h3 mb-4">Cari Petugas</h3>
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-              <input
-                className="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md bg-surface-bright"
-                placeholder="Cari nama atau peran..."
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
+      {/* Tabs */}
+      <div className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-1.5 mb-6 inline-flex gap-1">
+        {[
+          { id: 'identitas', label: 'Identitas Masjid', icon: 'account_balance' },
+          { id: 'petugas', label: 'Daftar Petugas Ibadah', icon: 'group' },
+          { id: 'pengguna', label: 'Daftar Pengguna', icon: 'people' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setCurrentTab(tab.id)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-label-md text-label-md transition-all duration-200 ${
+              currentTab === tab.id
+                ? 'bg-primary text-on-primary shadow-sm'
+                : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>{tab.icon}</span>
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-          <div className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6">
-            <h3 className="font-h3 text-h3 mb-4">Filter Peran</h3>
-            <div className="space-y-3">
-              {roles.map((role) => (
-                <label key={role} className="flex items-center gap-3 cursor-pointer group">
-                  <input className="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
-                  <span className="font-body-md text-body-md group-hover:text-primary transition-colors">{roleLabel[role]}</span>
-                </label>
-              ))}
+      {/* Tab Content */}
+      {currentTab === 'identitas' && (
+        <div className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6">
+          <h3 className="font-h3 text-h3 text-on-surface mb-6">Identitas Masjid (Kop Surat)</h3>
+          <form onSubmit={handleSaveProfil} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="md:col-span-2">
+              <label className="font-label-md text-label-md text-on-surface block mb-1.5">Nama Masjid</label>
+              <input name="nama_masjid" defaultValue={profilMasjid?.nama_masjid || ''} className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" required />
             </div>
-          </div>
+            <div className="md:col-span-2">
+              <label className="font-label-md text-label-md text-on-surface block mb-1.5">Alamat</label>
+              <textarea name="alamat" defaultValue={profilMasjid?.alamat || ''} rows="2" className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"></textarea>
+            </div>
+            <div>
+              <label className="font-label-md text-label-md text-on-surface block mb-1.5">Nomor Kontak</label>
+              <input name="nomor_kontak" defaultValue={profilMasjid?.nomor_kontak || ''} className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+            </div>
+            <div>
+              <label className="font-label-md text-label-md text-on-surface block mb-1.5">Logo URL</label>
+              <input name="logo_url" defaultValue={profilMasjid?.logo_url || ''} className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+            </div>
+            <div>
+              <label className="font-label-md text-label-md text-on-surface block mb-1.5">Ketua Takmir</label>
+              <input name="ketua_takmir" defaultValue={profilMasjid?.ketua_takmir || ''} className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+            </div>
+            <div>
+              <label className="font-label-md text-label-md text-on-surface block mb-1.5">Sekretaris</label>
+              <input name="sekretaris" defaultValue={profilMasjid?.sekretaris || ''} className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+            </div>
+            <div>
+              <label className="font-label-md text-label-md text-on-surface block mb-1.5">Bendahara</label>
+              <input name="bendahara" defaultValue={profilMasjid?.bendahara || ''} className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+            </div>
+            <div className="md:col-span-2 flex justify-end">
+              <button type="submit" disabled={savingProfil} className="bg-primary text-on-primary hover:bg-primary-container transition-colors px-6 py-2.5 rounded-lg font-label-md font-semibold disabled:opacity-50">
+                {savingProfil ? 'Menyimpan...' : 'Simpan Identitas Masjid'}
+              </button>
+            </div>
+          </form>
         </div>
+      )}
 
-        {/* Users & Petugas List */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Users Section */}
-          <div>
-            <h3 className="font-h3 text-h3 text-on-surface mb-4">Daftar Pengguna</h3>
-            <div className="space-y-4">
-              {filteredUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 hover:bg-surface-container-low transition-colors duration-200"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-surface-container-highest overflow-hidden shrink-0 border-2 border-primary/10 flex items-center justify-center text-secondary font-h3">
-                        {user.nama.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+      {currentTab === 'petugas' && (
+        <div className="space-y-4">
+          {petugasList.map((p) => (
+            <div
+              key={p.id}
+              className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-5 hover:bg-surface-container-low transition-colors duration-200"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-surface-container-highest overflow-hidden shrink-0 border-2 border-primary/10">
+                    {p.avatar_url ? (
+                      <img alt={p.nama} className="w-full h-full object-cover" src={p.avatar_url} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-secondary font-h3">
+                        {p.nama.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
                       </div>
-                      <div>
-                        <h4 className="font-h3 text-h3 text-on-surface">{user.nama}</h4>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className={`px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase tracking-wider font-bold ${roleBadgeClass[user.role] || 'bg-gray-100 text-gray-800'}`}>
-                            {roleLabel[user.role] || user.role}
-                          </span>
-                          <span className="text-outline text-label-sm font-label-sm">• {user.phone || '-'}</span>
-                        </div>
-                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-h3 text-h3 text-on-surface">{p.nama}</h4>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-md font-label-sm text-[10px] ${petugasRoleBadgeClass[p.role] || 'bg-gray-100 text-gray-800'}`}>
+                        {petugasRoleLabel[p.role] || p.role}
+                      </span>
+                      <span className="text-outline text-label-sm font-label-sm">• {p.phone || '-'}</span>
                     </div>
-                    <div className="flex items-center gap-2 sm:ml-auto">
-                      <select
-                        className="border border-outline-variant rounded-lg py-1.5 px-3 font-body-sm text-body-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                      >
-                        {roles.map((role) => (
-                          <option key={role} value={role}>{roleLabel[role]}</option>
-                        ))}
-                      </select>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                      Honor: {p.tipe_honor === 'per_hadir' ? formatCurrency(p.honor_per_hadir || 0) + '/hadir' : formatCurrency(p.honor_bulanan || 0) + '/bulan'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 sm:ml-auto">
+                  <button
+                    onClick={() => openEdit(p)}
+                    className="p-2 text-on-surface-variant hover:bg-surface-container-high hover:text-primary rounded-lg transition-colors"
+                    title="Edit"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">edit</span>
+                  </button>
+                  <button
+                    onClick={() => setDeletingPetugas(p)}
+                    className="p-2 text-on-surface-variant hover:bg-error-container hover:text-error rounded-lg transition-colors"
+                    title="Hapus"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {petugasList.length === 0 && (
+            <p className="text-center text-on-surface-variant py-8">Belum ada data petugas.</p>
+          )}
+        </div>
+      )}
+
+      {currentTab === 'pengguna' && (
+        <div className="space-y-4">
+          {users.map((user) => (
+            <div
+              key={user.id}
+              className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 hover:bg-surface-container-low transition-colors duration-200"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-surface-container-highest overflow-hidden shrink-0 border-2 border-primary/10 flex items-center justify-center text-secondary font-h3">
+                    {user.nama.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+                  </div>
+                  <div>
+                    <h4 className="font-h3 text-h3 text-on-surface">{user.nama}</h4>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase tracking-wider font-bold ${roleBadgeClass[user.role] || 'bg-gray-100 text-gray-800'}`}>
+                        {roleLabel[user.role] || user.role}
+                      </span>
+                      <span className="text-outline text-label-sm font-label-sm">• {user.phone || '-'}</span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Petugas Section */}
-          <div>
-            <h3 className="font-h3 text-h3 text-on-surface mb-4">Daftar Petugas</h3>
-            <div className="space-y-4">
-              {filteredPetugas.map((p) => (
-                <div
-                  key={p.id}
-                  className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 hover:bg-surface-container-low transition-colors duration-200"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-surface-container-highest overflow-hidden shrink-0 border-2 border-primary/10">
-                        {p.avatar_url ? (
-                          <img alt={p.nama} className="w-full h-full object-cover" src={p.avatar_url} />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-secondary font-h3">
-                            {p.nama.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-h3 text-h3 text-on-surface">{p.nama}</h4>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className={`px-2 py-0.5 rounded-md font-label-sm text-[10px] ${petugasRoleBadgeClass[p.role] || 'bg-gray-100 text-gray-800'}`}>
-                            {petugasRoleLabel[p.role] || p.role}
-                          </span>
-                          <span className="text-outline text-label-sm font-label-sm">• {p.phone || '-'}</span>
-                        </div>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                          Honor: {p.tipe_honor === 'per_hadir' ? formatCurrency(p.honor_per_hadir || 0) + '/hadir' : formatCurrency(p.honor_bulanan || 0) + '/bulan'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 sm:ml-auto">
-                      <button
-                        onClick={() => openEdit(p)}
-                        className="p-2 text-on-surface-variant hover:bg-surface-container-high hover:text-primary rounded-lg transition-colors"
-                        title="Edit"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">edit</span>
-                      </button>
-                      <button
-                        onClick={() => setDeletingPetugas(p)}
-                        className="p-2 text-on-surface-variant hover:bg-error-container hover:text-error rounded-lg transition-colors"
-                        title="Hapus"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2 sm:ml-auto">
+                  <select
+                    className="border border-outline-variant rounded-lg py-1.5 px-3 font-body-sm text-body-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                  >
+                    {roles.map((role) => (
+                      <option key={role} value={role}>{roleLabel[role]}</option>
+                    ))}
+                  </select>
                 </div>
-              ))}
-              {filteredPetugas.length === 0 && (
-                <p className="text-center text-on-surface-variant py-8">Belum ada data petugas.</p>
-              )}
+              </div>
             </div>
-          </div>
+          ))}
+          {users.length === 0 && (
+            <p className="text-center text-on-surface-variant py-8">Belum ada data pengguna.</p>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Modals */}
       <PetugasModal
