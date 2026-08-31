@@ -12,6 +12,16 @@
     <style>
       @media print {
         .no-print { display: none !important; }
+        @page {
+          size: A4;
+          margin: 15mm;
+        }
+        body {
+          background: white;
+          color: black;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
       }
     </style>
   </head>

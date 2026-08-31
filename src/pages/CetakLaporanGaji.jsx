@@ -192,7 +192,7 @@ export default function CetakLaporanGaji() {
         </button>
       </div>
 
-      <div className="max-w-4xl mx-auto p-8 print:p-0">
+      <div className="max-w-4xl mx-auto p-8 print:p-0 print:max-w-none">
         {/* Kop Surat */}
         <div className="flex items-center gap-6 mb-6 border-b-2 border-black pb-6">
           {profil?.logo_url && (

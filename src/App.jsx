@@ -248,11 +248,11 @@ export default function App() {
     navigate('/login')
   }
 
-  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+  const isCetakLaporan = currentPath === '/cetak-laporan'
 
   return (
     <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col pb-24 md:pb-0">
-      {session && <TopAppBar currentPath={currentPath} onLogout={handleLogout} profile={profile} />}
+      {session && !isCetakLaporan && <TopAppBar currentPath={currentPath} onLogout={handleLogout} profile={profile} />}
       <main className="flex-grow">
         {currentPath === '/login' && <LoginPage />}
         {currentPath === '/laporan' && <LaporanGaji />}
@@ -267,13 +267,13 @@ export default function App() {
         {currentPath === '/buat-akun' && <BuatAkunPetugas />}
         {currentPath === '/' && <HomePage />}
       </main>
-      {session && (
+      {session && !isCetakLaporan && (
         <>
           <BottomNav currentPath={currentPath} onLogout={handleLogout} profile={profile} onMoreClick={() => setShowMore(true)} />
           <MoreMenu isOpen={showMore} onClose={() => setShowMore(false)} currentPath={currentPath} onLogout={handleLogout} profile={profile} />
         </>
       )}
-      {showWarning && (
+      {showWarning && !isCetakLaporan && (
         <IdleWarningModal
           remainingSeconds={IDLE_TIMEOUT}
           onStay={resetIdle}
