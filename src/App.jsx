@@ -12,6 +12,7 @@ import JadwalSaya from './pages/JadwalSaya'
 import KonfirmasiIzin from './pages/KonfirmasiIzin'
 import BuatAkunPetugas from './pages/BuatAkunPetugas'
 import HomePage from './pages/HomePage'
+import CetakLaporanGaji from './pages/CetakLaporanGaji'
 
 function TopAppBar({ currentPath, onLogout, profile }) {
   const isLaporan = currentPath === '/laporan'
@@ -255,6 +256,7 @@ export default function App() {
       <main className="flex-grow">
         {currentPath === '/login' && <LoginPage />}
         {currentPath === '/laporan' && <LaporanGaji />}
+        {currentPath === '/cetak-laporan' && <CetakLaporanGaji />}
         {currentPath === '/presensi' && (isAdmin ? <AttendancePage /> : <Navigate to="/" replace />)}
         {currentPath === '/profil' && <UserManagement />}
         {currentPath === '/rekap' && <RekapKehadiranSaya />}

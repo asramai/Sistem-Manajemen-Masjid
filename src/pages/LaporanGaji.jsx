@@ -130,6 +130,7 @@ function RosterTable({ roster }) {
 
 export default function LaporanGaji() {
   const { profile, session } = useAuth()
+  const navigate = useNavigate()
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedRole, setSelectedRole] = useState('Semua')
@@ -360,7 +361,10 @@ export default function LaporanGaji() {
             </select>
           </div>
           {isAdmin && (
-            <button className="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95">
+            <button
+              onClick={() => navigate(`/cetak-laporan?bulan=${selectedMonth}&tahun=${selectedYear}`)}
+              className="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95"
+            >
               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>picture_as_pdf</span>
               Cetak PDF Laporan Gaji
             </button>

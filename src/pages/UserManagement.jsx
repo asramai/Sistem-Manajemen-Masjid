@@ -471,6 +471,8 @@ export default function UserManagement() {
   const { signOut } = useAuth()
   const [users, setUsers] = useState([])
   const [petugasList, setPetugasList] = useState([])
+  const [profilMasjid, setProfilMasjid] = useState(null)
+  const [savingProfil, setSavingProfil] = useState(false)
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -495,11 +497,18 @@ export default function UserManagement() {
       .select('*')
       .order('nama')
 
+    const { data: profilData } = await supabase
+      .from('profil_masjid')
+      .select('*')
+      .limit(1)
+      .maybeSingle()
+
     if (profilesError) console.error('Error fetching profiles:', profilesError)
     if (petugasError) console.error('Error fetching petugas:', petugasError)
 
     setUsers(profilesData || [])
     setPetugasList(petugasData || [])
+    setProfilMasjid(profilData)
     setLoading(false)
   }
 
@@ -548,6 +557,35 @@ export default function UserManagement() {
     setDeletingPetugas(null)
   }
 
+  const handleSaveProfil = async (e) => {
+    e.preventDefault()
+    setSavingProfil(true)
+    const formData = new FormData(e.target)
+    const data = {
+      nama_masjid: formData.get('nama_masjid'),
+      alamat: formData.get('alamat'),
+      nomor_kontak: formData.get('nomor_kontak'),
+      ketua_takmir: formData.get('ketua_takmir'),
+      sekretaris: formData.get('sekretaris'),
+      bendahara: formData.get('bendahara'),
+    }
+
+    let result
+    if (profilMasjid?.id) {
+      result = await supabase.from('profil_masjid').update(data).eq('id', profilMasjid.id).select()
+    } else {
+      result = await supabase.from('profil_masjid').insert([data]).select()
+    }
+
+    if (result.error) {
+      alert('Gagal menyimpan profil: ' + result.error.message)
+    } else {
+      setProfilMasjid(result.data?.[0])
+      alert('Profil masjid berhasil disimpan!')
+    }
+    setSavingProfil(false)
+  }
+
   const openAdd = () => {
     setEditingPetugas(null)
     setCreatedPassword('')
@@ -592,6 +630,46 @@ export default function UserManagement() {
             Tambah Petugas Baru
           </button>
         </div>
+      </div>
+
+      {/* Profil Masjid */}
+      <div className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 mb-8">
+        <h3 className="font-h3 text-h3 text-on-surface mb-4">Identitas Masjid (Kop Surat)</h3>
+        <form onSubmit={handleSaveProfil} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className="font-label-md text-label-md text-on-surface block mb-1">Nama Masjid</label>
+            <input name="nama_masjid" defaultValue={profilMasjid?.nama_masjid || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" required />
+          </div>
+          <div className="md:col-span-2">
+            <label className="font-label-md text-label-md text-on-surface block mb-1">Alamat</label>
+            <textarea name="alamat" defaultValue={profilMasjid?.alamat || ''} rows="2" className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"></textarea>
+          </div>
+          <div>
+            <label className="font-label-md text-label-md text-on-surface block mb-1">Nomor Kontak</label>
+            <input name="nomor_kontak" defaultValue={profilMasjid?.nomor_kontak || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+          </div>
+          <div>
+            <label className="font-label-md text-label-md text-on-surface block mb-1">Logo URL</label>
+            <input name="logo_url" defaultValue={profilMasjid?.logo_url || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+          </div>
+          <div>
+            <label className="font-label-md text-label-md text-on-surface block mb-1">Ketua Takmir</label>
+            <input name="ketua_takmir" defaultValue={profilMasjid?.ketua_takmir || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+          </div>
+          <div>
+            <label className="font-label-md text-label-md text-on-surface block mb-1">Sekretaris</label>
+            <input name="sekretaris" defaultValue={profilMasjid?.sekretaris || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+          </div>
+          <div>
+            <label className="font-label-md text-label-md text-on-surface block mb-1">Bendahara</label>
+            <input name="bendahara" defaultValue={profilMasjid?.bendahara || ''} className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md" />
+          </div>
+          <div className="md:col-span-2 flex justify-end">
+            <button type="submit" disabled={savingProfil} className="bg-primary text-on-primary hover:bg-primary-container transition-colors px-6 py-2.5 rounded-lg font-label-md font-semibold disabled:opacity-50">
+              {savingProfil ? 'Menyimpan...' : 'Simpan Identitas Masjid'}
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Dashboard Grid */}
