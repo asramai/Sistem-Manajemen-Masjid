@@ -362,13 +362,22 @@ export default function LaporanGaji() {
             </select>
           </div>
           {isAdmin && (
-            <button
-              onClick={() => navigate(`/cetak-laporan?bulan=${selectedMonth}&tahun=${selectedYear}`)}
-              className="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>picture_as_pdf</span>
-              Cetak PDF Laporan Gaji
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate(`/cetak-laporan?bulan=${selectedMonth}&tahun=${selectedYear}`)}
+                className="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>picture_as_pdf</span>
+                Cetak PDF Laporan Gaji
+              </button>
+              <button
+                onClick={() => navigate(`/cetak-detail?bulan=${selectedMonth}&tahun=${selectedYear}`)}
+                className="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>table_view</span>
+                Cetak PDF Detail
+              </button>
+            </div>
           )}
         </div>
       </div>

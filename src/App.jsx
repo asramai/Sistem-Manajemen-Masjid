@@ -13,6 +13,7 @@ import KonfirmasiIzin from './pages/KonfirmasiIzin'
 import BuatAkunPetugas from './pages/BuatAkunPetugas'
 import HomePage from './pages/HomePage'
 import CetakLaporanGaji from './pages/CetakLaporanGaji'
+import CetakDetailLaporanGaji from './pages/CetakDetailLaporanGaji'
 
 function TopAppBar({ currentPath, onLogout, profile }) {
   const isLaporan = currentPath === '/laporan'
@@ -250,7 +251,7 @@ export default function App() {
 
   const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
 
-  const isCetakLaporan = currentPath === '/cetak-laporan'
+  const isCetakLaporan = currentPath === '/cetak-laporan' || currentPath === '/cetak-detail'
 
   return (
     <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col pb-24 md:pb-0">
@@ -259,6 +260,7 @@ export default function App() {
         {currentPath === '/login' && <LoginPage />}
         {currentPath === '/laporan' && <LaporanGaji />}
         {currentPath === '/cetak-laporan' && <CetakLaporanGaji />}
+        {currentPath === '/cetak-detail' && <CetakDetailLaporanGaji />}
         {currentPath === '/presensi' && (isAdmin ? <AttendancePage /> : <Navigate to="/" replace />)}
         {currentPath === '/profil' && <UserManagement />}
         {currentPath === '/rekap' && <RekapKehadiranSaya />}
