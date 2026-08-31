@@ -480,6 +480,9 @@ export default function UserManagement() {
   const [editingPetugas, setEditingPetugas] = useState(null)
   const [deletingPetugas, setDeletingPetugas] = useState(null)
   const [createdPassword, setCreatedPassword] = useState('')
+  const [userModalOpen, setUserModalOpen] = useState(false)
+  const [savingUser, setSavingUser] = useState(false)
+  const [userForm, setUserForm] = useState({ nama: '', email: '', password: '', role: 'admin', phone: '' })
 
   useEffect(() => {
     fetchData()
@@ -578,6 +581,41 @@ export default function UserManagement() {
       alert('Profil masjid berhasil disimpan!')
     }
     setSavingProfil(false)
+  }
+
+  const handleSaveUser = async (e) => {
+    e.preventDefault()
+    setSavingUser(true)
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: userForm.email,
+        password: userForm.password,
+      })
+
+      if (error) throw error
+
+      const userId = data.user?.id
+      if (!userId) throw new Error('Gagal membuat akun')
+
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: userId,
+        nama: userForm.nama,
+        email: userForm.email,
+        role: userForm.role,
+        phone: userForm.phone || null,
+      })
+
+      if (profileError) throw profileError
+
+      alert('Akun berhasil dibuat!')
+      setUserForm({ nama: '', email: '', password: '', role: 'admin', phone: '' })
+      setUserModalOpen(false)
+      fetchData()
+    } catch (err) {
+      alert('Gagal membuat akun: ' + (err.message || err))
+    } finally {
+      setSavingUser(false)
+    }
   }
 
   const openAdd = () => {
@@ -750,6 +788,15 @@ export default function UserManagement() {
 
       {currentTab === 'pengguna' && (
         <div className="space-y-4">
+          <div className="flex justify-end">
+            <button
+              onClick={() => setUserModalOpen(true)}
+              className="bg-primary text-on-primary hover:bg-primary-container transition-colors duration-200 px-5 py-2.5 rounded-lg font-label-md text-label-md flex items-center gap-2 shadow-sm hover:shadow-md"
+            >
+              <span className="material-symbols-outlined">person_add</span>
+              Tambah Akun
+            </button>
+          </div>
           {users.map((user) => (
             <div
               key={user.id}
@@ -808,6 +855,80 @@ export default function UserManagement() {
         title="Hapus Petugas?"
         subtitle={`Yakin ingin menghapus ${deletingPetugas?.nama}? Data ini tidak dapat dikembalikan.`}
       />
+
+      {userModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setUserModalOpen(false)}></div>
+          <div className="relative bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant w-full max-w-lg">
+            <div className="p-6 border-b border-outline-variant flex justify-between items-center">
+              <h3 className="font-h3 text-h3 text-on-surface">Tambah Akun Baru</h3>
+              <button onClick={() => setUserModalOpen(false)} className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleSaveUser} className="p-6 space-y-4">
+              <div>
+                <label className="font-label-md text-label-md text-on-surface block mb-1.5">Nama Lengkap</label>
+                <input
+                  className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                  value={userForm.nama}
+                  onChange={(e) => setUserForm((prev) => ({ ...prev, nama: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label className="font-label-md text-label-md text-on-surface block mb-1.5">Email</label>
+                <input
+                  type="email"
+                  className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                  value={userForm.email}
+                  onChange={(e) => setUserForm((prev) => ({ ...prev, email: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label className="font-label-md text-label-md text-on-surface block mb-1.5">Password</label>
+                <input
+                  type="password"
+                  className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                  value={userForm.password}
+                  onChange={(e) => setUserForm((prev) => ({ ...prev, password: e.target.value }))}
+                  required
+                  minLength={6}
+                />
+              </div>
+              <div>
+                <label className="font-label-md text-label-md text-on-surface block mb-1.5">Peran</label>
+                <select
+                  className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                  value={userForm.role}
+                  onChange={(e) => setUserForm((prev) => ({ ...prev, role: e.target.value }))}
+                >
+                  <option value="admin">Admin</option>
+                  <option value="takmir">Takmir</option>
+                  <option value="petugas">Petugas</option>
+                </select>
+              </div>
+              <div>
+                <label className="font-label-md text-label-md text-on-surface block mb-1.5">Nomor HP</label>
+                <input
+                  className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                  value={userForm.phone}
+                  onChange={(e) => setUserForm((prev) => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setUserModalOpen(false)} className="px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md">
+                  Batal
+                </button>
+                <button type="submit" disabled={savingUser} className="bg-primary text-on-primary hover:bg-primary-container transition-colors px-6 py-2.5 rounded-lg font-label-md font-semibold disabled:opacity-50">
+                  {savingUser ? 'Membuat...' : 'Buat Akun'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
