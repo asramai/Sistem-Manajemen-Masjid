@@ -249,13 +249,13 @@ export default function AttendancePage() {
     <div className="max-w-3xl mx-auto space-y-stack-lg">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-outline-variant pb-4 gap-4">
-        <div>
+        <div className="text-center md:text-left">
           <h2 className="font-h1 text-h1 text-primary-container mb-2">Input Presensi Hari Ini</h2>
           <p className="font-body-md text-on-surface-variant">Catat kehadiran petugas sholat fardhu.</p>
         </div>
         <div className="relative w-full md:w-auto">
-          <div className="flex items-center bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 focus-within:border-primary-container focus-within:ring-2 focus-within:ring-primary-container/20 transition-all">
-            <span className="material-symbols-outlined text-on-surface-variant mr-2">calendar_today</span>
+          <div className="flex items-center bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 focus-within:border-primary-container focus-within:ring-2 focus-within:ring-primary-container/20 transition-all">
+            <span className="material-symbols-outlined text-on-surface-variant mr-2 text-base">calendar_today</span>
             <input
               className="bg-transparent border-none focus:ring-0 text-on-surface font-body-md w-full outline-none p-0 cursor-pointer"
               type="date"
@@ -272,7 +272,7 @@ export default function AttendancePage() {
           <button
             key={prayer}
             onClick={() => setSelectedPrayer(prayer)}
-            className={`px-6 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors ${
+            className={`px-4 md:px-6 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors ${
               selectedPrayer === prayer
                 ? 'bg-primary-container text-white'
                 : 'bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
@@ -285,14 +285,14 @@ export default function AttendancePage() {
 
       {/* Assignment Card */}
       <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
-        <div className="p-6 border-b border-outline-variant bg-surface-bright flex justify-between items-center">
-          <h3 className="font-h3 text-h3 text-on-surface">Penugasan Petugas - {selectedPrayer}</h3>
-          <span className="bg-secondary-container/30 text-on-secondary-container px-3 py-1 rounded-md font-label-sm text-label-sm border border-secondary-container/50">
+        <div className="p-4 md:p-6 border-b border-outline-variant bg-surface-bright flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <h3 className="font-h3 text-h3 text-on-surface text-center sm:text-left">Penugasan Petugas - {selectedPrayer}</h3>
+          <span className="bg-secondary-container/30 text-on-secondary-container px-3 py-1 rounded-md font-label-sm text-label-sm border border-secondary-container/50 self-center sm:self-auto">
             {formatDate(new Date(selectedDate))}
           </span>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {!jadwalItem ? (
             <div className="text-center py-8">
               <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-4">calendar_today</span>
@@ -305,11 +305,11 @@ export default function AttendancePage() {
               <p className="font-body-sm text-body-sm text-on-surface-variant mt-2">Buat penugasan terlebih dahulu di menu Jadwal Per Bulan.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Kolom Muadzin */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700">
+              <div className="space-y-3 md:space-y-4">
+                <div className="flex items-center gap-2 mb-3 md:mb-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 shrink-0">
                     <span className="material-symbols-outlined text-sm">volume_up</span>
                   </div>
                   <h4 className="font-h3 text-h3 text-on-surface">Muadzin</h4>
@@ -319,7 +319,7 @@ export default function AttendancePage() {
                   <div>
                     <label className="font-label-md text-label-md text-on-surface block mb-1">Utama</label>
                     <select
-                      className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                      className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
                       value={penugasan.muadzin_utama_id || ''}
                       onChange={(e) => handleChange('muadzin_utama_id', e.target.value)}
                     >
@@ -331,13 +331,13 @@ export default function AttendancePage() {
                   </div>
 
                   <div>
-                    <label className="font-label-md text-label-md text-on-surface block mb-1">Cadangan (Imam)</label>
+                    <label className="font-label-md text-label-md text-on-surface block mb-1">Cadangan</label>
                     <select
-                      className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                      className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
                       value={penugasan.muadzin_cadangan_id || ''}
                       onChange={(e) => handleChange('muadzin_cadangan_id', e.target.value)}
                     >
-                      <option value="">-- Pilih Imam sebagai cadangan --</option>
+                      <option value="">-- Pilih Cadangan --</option>
                       {imamList.map((p) => (
                         <option key={p.id} value={p.id}>{p.nama}</option>
                       ))}
@@ -347,9 +347,9 @@ export default function AttendancePage() {
               </div>
 
               {/* Kolom Imam */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-700">
+              <div className="space-y-3 md:space-y-4">
+                <div className="flex items-center gap-2 mb-3 md:mb-4">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 shrink-0">
                     <span className="material-symbols-outlined text-sm">mosque</span>
                   </div>
                   <h4 className="font-h3 text-h3 text-on-surface">Imam</h4>
@@ -359,7 +359,7 @@ export default function AttendancePage() {
                   <div>
                     <label className="font-label-md text-label-md text-on-surface block mb-1">Utama</label>
                     <select
-                      className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                      className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
                       value={penugasan.imam_utama_id || ''}
                       onChange={(e) => handleChange('imam_utama_id', e.target.value)}
                     >
@@ -371,13 +371,13 @@ export default function AttendancePage() {
                   </div>
 
                   <div>
-                    <label className="font-label-md text-label-md text-on-surface block mb-1">Cadangan (Muadzin)</label>
+                    <label className="font-label-md text-label-md text-on-surface block mb-1">Cadangan</label>
                     <select
-                      className="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                      className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
                       value={penugasan.imam_cadangan_id || ''}
                       onChange={(e) => handleChange('imam_cadangan_id', e.target.value)}
                     >
-                      <option value="">-- Pilih Muadzin sebagai cadangan --</option>
+                      <option value="">-- Pilih Cadangan --</option>
                       {muadzinList.map((p) => (
                         <option key={p.id} value={p.id}>{p.nama}</option>
                       ))}
@@ -389,11 +389,11 @@ export default function AttendancePage() {
           )}
         </div>
 
-        <div className="p-6 border-t border-outline-variant bg-surface-bright flex justify-end">
+        <div className="p-4 md:p-6 border-t border-outline-variant bg-surface-bright flex justify-end">
           <button
             onClick={handleSave}
             disabled={saving || !jadwalBulanan}
-            className="bg-primary-container hover:opacity-90 text-white px-6 py-2.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+            className="w-full sm:w-auto bg-primary-container hover:opacity-90 text-white px-6 py-2.5 rounded-lg font-label-md text-label-md font-semibold shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
           >
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
               save
@@ -405,32 +405,34 @@ export default function AttendancePage() {
 
       {savedPresensi.length > 0 && (
         <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
-          <div className="p-6 border-b border-outline-variant bg-surface-bright">
+          <div className="p-4 md:p-6 border-b border-outline-variant bg-surface-bright">
             <h3 className="font-h3 text-h3 text-on-surface">Data Presensi Tersimpan</h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-surface-bright border-b border-outline-variant">
-                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tanggal</th>
-                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Shalat</th>
-                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Muadzin</th>
-                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Imam</th>
-                  <th className="p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Presensi</th>
-                </tr>
-              </thead>
-              <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
-                {savedPresensi.map((record) => (
-                  <tr key={record.id} className="hover:bg-surface-container-low transition-colors">
-                    <td className="p-4">{formatDate(new Date(record.tanggal))}</td>
-                    <td className="p-4">{selectedPrayer}</td>
-                    <td className="p-4">{record.role?.startsWith('Muadzin') ? record.nama : '-'}</td>
-                    <td className="p-4">{record.role?.startsWith('Imam') ? record.nama : '-'}</td>
-                    <td className="p-4">{record.presensiTime}</td>
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-bright border-b border-outline-variant">
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tanggal</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Shalat</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Muadzin</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Imam</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Presensi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
+                  {savedPresensi.map((record) => (
+                    <tr key={record.id} className="hover:bg-surface-container-low transition-colors">
+                      <td className="p-3 md:p-4 whitespace-nowrap">{formatDate(new Date(record.tanggal))}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap">{selectedPrayer}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap">{record.role?.startsWith('Muadzin') ? record.nama : '-'}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap">{record.role?.startsWith('Imam') ? record.nama : '-'}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap">{record.presensiTime}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
