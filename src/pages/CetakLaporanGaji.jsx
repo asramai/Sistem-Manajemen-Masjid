@@ -251,15 +251,15 @@ export default function CetakLaporanGaji() {
         {/* Tanda Tangan */}
         <div className="flex justify-between mt-16">
           <div className="w-5/12 pr-4">
-            <p className="font-semibold mb-10 text-xs">Mengetahui,</p>
-            <p className="font-semibold text-xs">Ketua Takmir</p>
-            <div className="h-20 border-b-2 border-black mb-1"></div>
+            <p className="font-semibold text-xs leading-tight">Mengetahui,</p>
+            <p className="font-semibold text-xs leading-tight mb-10">Ketua Takmir</p>
+            <div className="h-20 mb-1"></div>
             <p className="font-semibold text-xs">{profil?.ketua_takmir || '(Nama Ketua Takmir)'}</p>
           </div>
           <div className="w-5/12 pl-4">
-            <p className="font-semibold mb-10 text-xs">Marisa, {formatDate(new Date())}</p>
-            <p className="font-semibold text-xs">Bendahara</p>
-            <div className="h-20 border-b-2 border-black mb-1"></div>
+            <p className="font-semibold text-xs leading-tight">Marisa, {formatDate(new Date())}</p>
+            <p className="font-semibold text-xs leading-tight mb-10">Bendahara</p>
+            <div className="h-20 mb-1"></div>
             <p className="font-semibold text-xs">{profil?.bendahara || '(Nama Bendahara)'}</p>
           </div>
         </div>
