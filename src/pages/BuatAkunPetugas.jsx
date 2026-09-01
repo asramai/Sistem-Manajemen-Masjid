@@ -80,6 +80,7 @@ export default function BuatAkunPetugas() {
         setMessage(`Akun berhasil dibuat untuk ${petugas.nama}!`)
         setForm({ petugas_id: '', email: '', password: '' })
         fetchPetugas()
+        setTimeout(() => window.location.reload(), 1500)
       }
     } catch (err) {
       setMessage('Gagal: ' + (err.message || err))
@@ -143,6 +144,7 @@ export default function BuatAkunPetugas() {
         setMessage(`Akun berhasil dibuat!\nEmail: ${email}\nPassword: ${randomPassword}\n\nSalin dan berikan ke petugas.`)
         setForm({ petugas_id: '', email: '', password: '' })
         fetchPetugas()
+        setTimeout(() => window.location.reload(), 1500)
       }
     } catch (err) {
       setMessage('Gagal: ' + (err.message || err))
