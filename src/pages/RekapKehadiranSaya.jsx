@@ -36,20 +36,33 @@ export default function RekapKehadiranSaya() {
       .eq('auth_user_id', session.user.id)
       .maybeSingle()
 
+    let petugasResult = petugasData
+
+    if (!petugasResult && profile?.nama) {
+      const { data: petugasByName } = await supabase
+        .from('petugas')
+        .select('*')
+        .ilike('nama', profile.nama)
+        .limit(1)
+        .maybeSingle()
+
+      petugasResult = petugasByName
+    }
+
     if (petugasError) {
       console.error('Error fetching petugas:', petugasError)
       setLoading(false)
       return
     }
 
-    if (!petugasData) {
+    if (!petugasResult) {
       console.warn('No petugas found for user:', session.user.id)
       setPetugas(null)
       setLoading(false)
       return
     }
 
-    setPetugas(petugasData)
+    setPetugas(petugasResult)
 
     const startDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
     const nextMonth = selectedMonth + 2
@@ -58,7 +71,7 @@ export default function RekapKehadiranSaya() {
     const { data: presensiData, error: presensiError } = await supabase
       .from('presensi')
       .select('*, jadwal:nama_sholat')
-      .eq('petugas_id', petugasData.id)
+      .eq('petugas_id', petugasResult.id)
       .gte('tanggal', startDate)
       .lt('tanggal', endDate)
       .order('tanggal', { ascending: false })
