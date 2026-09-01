@@ -89,17 +89,19 @@ export default function KonfirmasiIzin() {
       .order('tanggal', { ascending: false })
 
     if (activeTab === 'pengajuan' && !isAdmin && petugasId) {
-      query = query.eq('petugas_id', petugasId)
-    } else if (activeTab === 'validasi' && isAdmin) {
-      query = query.eq('status', 'pending')
-    } else if (activeTab === 'riwayat') {
+      query = query.eq('petugas_id', petugasId).neq('status', 'approved')
+    } else if (activeTab === 'riwayat' && !isAdmin && petugasId) {
       const startDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
       const nextMonth = selectedMonth + 2
       const endDate = `${selectedYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
-      query = query.gte('tanggal', startDate).lt('tanggal', endDate)
-      if (!isAdmin && petugasId) {
-        query = query.eq('petugas_id', petugasId)
-      }
+      query = query.eq('petugas_id', petugasId).eq('status', 'approved').gte('tanggal', startDate).lt('tanggal', endDate)
+    } else if (activeTab === 'validasi' && isAdmin) {
+      query = query.eq('status', 'pending')
+    } else if (activeTab === 'riwayat' && isAdmin) {
+      const startDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
+      const nextMonth = selectedMonth + 2
+      const endDate = `${selectedYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
+      query = query.eq('status', 'approved').gte('tanggal', startDate).lt('tanggal', endDate)
     }
 
     const { data } = await query
