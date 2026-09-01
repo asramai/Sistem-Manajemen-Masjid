@@ -16,9 +16,19 @@ export default function RekapKehadiranSaya() {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth())
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
   const [history, setHistory] = useState([])
-  const [stats, setStats] = useState({ hadir: 0, izin: 0 })
   const [petugas, setPetugas] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [rekap, setRekap] = useState({
+    hadirImam: 0,
+    hadirMuadzin: 0,
+    izin: 0,
+    alpha: 0,
+    transportImam: 0,
+    transportMuadzin: 0,
+    totalTransport: 0,
+    gaji: 0,
+    totalDiterima: 0,
+  })
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -68,52 +78,135 @@ export default function RekapKehadiranSaya() {
     const nextMonth = selectedMonth + 2
     const endDate = `${selectedYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
 
-    const { data: presensiData, error: presensiError } = await supabase
-      .from('presensi')
-      .select('*, jadwal:nama_sholat')
-      .eq('petugas_id', petugasResult.id)
-      .gte('tanggal', startDate)
-      .lt('tanggal', endDate)
-      .order('tanggal', { ascending: false })
+    const [presensiResult, biayaResult, jadwalBulananResult] = await Promise.all([
+      supabase
+        .from('presensi')
+        .select('status, jadwal_id, tanggal, peran, keterangan')
+        .eq('petugas_id', petugasResult.id)
+        .gte('tanggal', startDate)
+        .lt('tanggal', endDate)
+        .order('tanggal', { ascending: false }),
+      supabase.from('biaya_transport').select('*'),
+      supabase
+        .from('jadwal_bulanan')
+        .select('*')
+        .gte('tanggal', startDate)
+        .lt('tanggal', endDate),
+    ])
 
-    if (presensiError) {
-      console.error('Error fetching presensi:', presensiError)
+    if (presensiResult.error) {
+      console.error('Error fetching presensi:', presensiResult.error)
       setLoading(false)
       return
     }
 
-    if (presensiData) {
-      const hadir = presensiData.filter((p) => p.status === 'hadir').length
-      const izin = presensiData.filter((p) => p.status === 'izin').length
-      setStats({ hadir, izin })
+    const biayaMap = {}
+    ;(biayaResult.data || []).forEach((b) => {
+      if (!biayaMap[b.nama_sholat]) {
+        biayaMap[b.nama_sholat] = {}
+      }
+      biayaMap[b.nama_sholat][b.peran] = b.nominal
+    })
 
-      const formatted = presensiData.map((p) => {
-        const date = new Date(p.tanggal)
-        const day = date.getDate()
-        const monthStr = date.toLocaleString('id-ID', { month: 'short' })
-        return {
-          id: p.id,
-          day,
-          month: monthStr.charAt(0).toUpperCase() + monthStr.slice(1),
-          title: p.jadwal?.nama_sholat || 'Sholat',
-          time: p.keterangan || '-',
-          status: p.status.charAt(0).toUpperCase() + p.status.slice(1),
-          icon: p.status === 'hadir' ? 'schedule' : p.status === 'izin' ? 'info' : 'error',
+    const jadwalBulananMap = {}
+    ;(jadwalBulananResult.data || []).forEach((j) => {
+      if (!jadwalBulananMap[j.tanggal]) {
+        jadwalBulananMap[j.tanggal] = {}
+      }
+      jadwalBulananMap[j.tanggal][j.nama_sholat] = j
+    })
+
+    const jadwalIds = [...new Set((presensiResult.data || []).map((r) => r.jadwal_id).filter(Boolean))]
+    const { data: jadwalData } = await supabase
+      .from('jadwal')
+      .select('id, nama_sholat')
+      .in('id', jadwalIds)
+
+    const jadwalMap = {}
+    ;(jadwalData || []).forEach((j) => {
+      jadwalMap[j.id] = j.nama_sholat
+    })
+
+    let hadirImam = 0
+    let hadirMuadzin = 0
+    let izin = 0
+    let alpha = 0
+    let transportImam = 0
+    let transportMuadzin = 0
+
+    const formatted = (presensiResult.data || []).map((pr) => {
+      const date = new Date(pr.tanggal)
+      const day = date.getDate()
+      const monthStr = date.toLocaleString('id-ID', { month: 'short' })
+      const namaSholat = jadwalMap[pr.jadwal_id] || 'Sholat'
+      let peran = pr.peran || null
+
+      if (!peran && pr.status === 'hadir') {
+        const jb = jadwalBulananMap[pr.tanggal]?.[namaSholat]
+        if (jb) {
+          if (jb.muadzin_utama_id === petugasResult.id || jb.muadzin_cadangan_id === petugasResult.id) {
+            peran = 'muadzin'
+          } else if (jb.imam_utama_id === petugasResult.id || jb.imam_cadangan_id === petugasResult.id) {
+            peran = 'imam'
+          }
         }
-      })
-      setHistory(formatted)
+      }
+
+      if (!peran) {
+        peran = petugasResult.role === 'imam' ? 'imam' : petugasResult.role === 'muadzin' ? 'muadzin' : null
+      }
+
+      if (pr.status === 'hadir') {
+        const nominal = biayaMap[namaSholat]?.[peran] || 0
+        if (peran === 'imam') {
+          hadirImam++
+          transportImam += nominal
+        } else if (peran === 'muadzin') {
+          hadirMuadzin++
+          transportMuadzin += nominal
+        }
+      } else if (pr.status === 'izin') {
+        izin++
+      } else if (pr.status === 'alpha') {
+        alpha++
+      }
+
+      return {
+        id: pr.id,
+        day,
+        month: monthStr.charAt(0).toUpperCase() + monthStr.slice(1),
+        title: namaSholat,
+        time: pr.keterangan || '-',
+        status: pr.status.charAt(0).toUpperCase() + pr.status.slice(1),
+        icon: pr.status === 'hadir' ? 'schedule' : pr.status === 'izin' ? 'info' : 'error',
+        peran: peran ? peran.charAt(0).toUpperCase() + peran.slice(1) : null,
+      }
+    })
+
+    setHistory(formatted)
+
+    const totalTransport = transportImam + transportMuadzin
+    let gaji = 0
+    if (petugasResult.tipe_honor === 'per_hadir') {
+      gaji = (hadirImam + hadirMuadzin) * (petugasResult.honor_per_hadir || 0)
+    } else {
+      gaji = petugasResult.honor_bulanan || 0
     }
+
+    setRekap({
+      hadirImam,
+      hadirMuadzin,
+      izin,
+      alpha,
+      transportImam,
+      transportMuadzin,
+      totalTransport,
+      gaji,
+      totalDiterima: gaji + totalTransport,
+    })
 
     setLoading(false)
   }
-
-  const totalHonor = useMemo(() => {
-    if (!petugas) return 0
-    if (petugas.tipe_honor === 'per_hadir') {
-      return stats.hadir * (petugas.honor_per_hadir || 0)
-    }
-    return petugas.honor_bulanan || 0
-  }, [stats, petugas])
 
   function formatCurrency(value) {
     return new Intl.NumberFormat('id-ID', {
@@ -192,7 +285,7 @@ export default function RekapKehadiranSaya() {
             <div className="border-t border-outline-variant/30 pt-4 mt-2 relative z-10">
               <p className="font-label-md text-label-md text-on-surface-variant mb-1 uppercase text-xs">Honor Per Hadir</p>
               <p className="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold">
-                {petugas ? formatCurrency(petugas.honor_per_hadir || 0) : 'Rp 0'}
+                {formatCurrency(petugas.honor_per_hadir || 0)}
               </p>
             </div>
           </div>
@@ -201,33 +294,58 @@ export default function RekapKehadiranSaya() {
           <div className="grid grid-cols-2 gap-md">
             <div className="glass-card rounded-xl p-4 flex flex-col justify-between">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>mosque</span>
               </div>
               <div>
-                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{stats.hadir}</p>
-                <p className="font-label-md text-label-md text-on-surface-variant mt-1">Total Hadir</p>
+                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{rekap.hadirImam}</p>
+                <p className="font-label-md text-label-md text-on-surface-variant mt-1">Hadir sebagai Imam</p>
               </div>
             </div>
             <div className="glass-card rounded-xl p-4 flex flex-col justify-between">
               <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center mb-3">
-                <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
+                <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>record_voice_over</span>
               </div>
               <div>
-                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{stats.izin}</p>
-                <p className="font-label-md text-label-md text-on-surface-variant mt-1">Total Izin</p>
+                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{rekap.hadirMuadzin}</p>
+                <p className="font-label-md text-label-md text-on-surface-variant mt-1">Hadir sebagai Muadzin</p>
+              </div>
+            </div>
+            <div className="glass-card rounded-xl p-4 flex flex-col justify-between">
+              <div className="w-8 h-8 rounded-full bg-tertiary/10 flex items-center justify-center mb-3">
+                <span className="material-symbols-outlined text-tertiary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>commute</span>
+              </div>
+              <div>
+                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{formatCurrency(rekap.transportImam)}</p>
+                <p className="font-label-md text-label-md text-on-surface-variant mt-1">Transport Imam</p>
+              </div>
+            </div>
+            <div className="glass-card rounded-xl p-4 flex flex-col justify-between">
+              <div className="w-8 h-8 rounded-full bg-tertiary/10 flex items-center justify-center mb-3">
+                <span className="material-symbols-outlined text-tertiary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>commute</span>
+              </div>
+              <div>
+                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{formatCurrency(rekap.transportMuadzin)}</p>
+                <p className="font-label-md text-label-md text-on-surface-variant mt-1">Transport Muadzin</p>
               </div>
             </div>
           </div>
 
-          {/* Total Honor Card */}
-          <div className="bg-primary text-on-primary rounded-xl p-6 shadow-md relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
-            <div className="relative z-10 flex flex-col items-start">
-              <div className="flex items-center gap-2 mb-2 text-on-primary/80">
-                <span className="material-symbols-outlined text-sm">account_balance_wallet</span>
-                <span className="font-label-md text-label-md">Total Honor Bulan Ini</span>
+          {/* Financial Summary */}
+          <div className="glass-card rounded-xl p-6 border border-outline-variant">
+            <h3 className="font-title-md text-title-md text-on-surface mb-4">Ringkasan Keuangan</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="font-body-md text-body-md text-on-surface-variant">Total Transport</span>
+                <span className="font-body-md text-body-md text-on-surface font-semibold">{formatCurrency(rekap.totalTransport)}</span>
               </div>
-              <p className="font-display-lg text-display-lg font-bold">{formatCurrency(totalHonor)}</p>
+              <div className="flex justify-between items-center">
+                <span className="font-body-md text-body-md text-on-surface-variant">Gaji Pokok</span>
+                <span className="font-body-md text-body-md text-on-surface font-semibold">{formatCurrency(rekap.gaji)}</span>
+              </div>
+              <div className="border-t border-outline-variant pt-3 flex justify-between items-center">
+                <span className="font-label-md text-label-md text-on-surface font-semibold">Total Diterima</span>
+                <span className="font-title-md text-title-md text-primary font-bold">{formatCurrency(rekap.totalDiterima)}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -247,7 +365,6 @@ export default function RekapKehadiranSaya() {
         <div className="glass-card rounded-xl p-6 h-full flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-title-md text-title-md text-on-surface">Riwayat Kehadiran</h3>
-            <button className="font-label-md text-label-md text-primary hover:text-primary-container transition">Lihat Semua</button>
           </div>
           {/* Scrollable List Area */}
           <div className="flex-grow overflow-y-auto no-scrollbar pr-2 space-y-3" style={{ maxHeight: '500px' }}>
@@ -275,6 +392,7 @@ export default function RekapKehadiranSaya() {
                       <p className="font-body-md text-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
                         <span className="material-symbols-outlined text-[14px]">{item.icon}</span>
                         {item.time}
+                        {item.peran && <span className="ml-2 text-xs font-semibold text-primary">({item.peran})</span>}
                       </p>
                     </div>
                   </div>
