@@ -314,10 +314,11 @@ export default function LaporanGaji() {
     setLoading(false)
   }
 
-  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+  const isSuperAdmin = profile?.role === 'super_admin'
+  const canViewAll = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
 
   const filteredRoster = roster.filter((item) => {
-    if (!isAdmin && currentPetugasId) {
+    if (!canViewAll && currentPetugasId) {
       if (item.id !== currentPetugasId) return false
     }
     const matchesRole = selectedRole === 'Semua' || item.role === selectedRole.toLowerCase()
@@ -410,7 +411,7 @@ export default function LaporanGaji() {
               ))}
             </select>
           </div>
-          {isAdmin && (
+          {canViewAll && (
             <div className="relative">
               <button
                 onClick={() => setShowDownloadMenu(!showDownloadMenu)}
@@ -505,7 +506,7 @@ export default function LaporanGaji() {
       </section>
 
       {/* Search and Filter Bar */}
-      {isAdmin && (
+      {canViewAll && (
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface rounded-xl p-4 border border-outline-variant shadow-sm">
           <div className="relative w-full sm:w-96">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style={{ fontSize: '20px' }}>

@@ -63,7 +63,8 @@ export default function HomePage() {
   const [biayaMap, setBiayaMap] = useState({})
   const [jadwalMap, setJadwalMap] = useState({})
 
-  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+  const isSuperAdmin = profile?.role === 'super_admin'
+  const canViewAdminStats = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
   const [currentPetugasId, setCurrentPetugasId] = useState(null)
 
   const today = useMemo(() => {
@@ -205,7 +206,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      {isAdmin ? (
+      {canViewAdminStats ? (
         <>
           {/* Admin Stats */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4">

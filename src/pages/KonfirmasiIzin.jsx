@@ -48,15 +48,21 @@ export default function KonfirmasiIzin() {
   }
 
   const fetchIzin = async () => {
-    if (!petugasId) return
     setLoading(true)
-
-    const { data } = await supabase
+    let query = supabase
       .from('konfirmasi_izin')
       .select('*')
-      .eq('petugas_id', petugasId)
       .order('tanggal', { ascending: false })
 
+    if (profile?.role !== 'super_admin' && profile?.role !== 'admin') {
+      if (!petugasId) {
+        setLoading(false)
+        return
+      }
+      query = query.eq('petugas_id', petugasId)
+    }
+
+    const { data } = await query
     setIzinList(data || [])
     setLoading(false)
   }
@@ -125,6 +131,36 @@ export default function KonfirmasiIzin() {
       fetchIzin()
     }
     setSaving(false)
+  }
+
+  const handleApprove = async (izin) => {
+    const { error } = await supabase
+      .from('konfirmasi_izin')
+      .update({ status: 'approved', catatan: 'Disetujui' })
+      .eq('id', izin.id)
+
+    if (error) {
+      alert('Gagal menyetujui: ' + error.message)
+    } else {
+      fetchIzin()
+    }
+  }
+
+  const handleReject = async (izin, catatan) => {
+    if (!catatan.trim()) {
+      alert('Masukkan catatan penolakan')
+      return
+    }
+    const { error } = await supabase
+      .from('konfirmasi_izin')
+      .update({ status: 'rejected', catatan })
+      .eq('id', izin.id)
+
+    if (error) {
+      alert('Gagal menolak: ' + error.message)
+    } else {
+      fetchIzin()
+    }
   }
 
   const getStatusBadge = (status) => {
@@ -298,6 +334,27 @@ export default function KonfirmasiIzin() {
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusBadge(izin.status)}`}>
                       {getStatusLabel(izin.status)}
                     </span>
+                    {(profile?.role === 'super_admin' || profile?.role === 'admin') && izin.status === 'pending' && (
+                      <div className="flex gap-2 ml-2">
+                        <button
+                          onClick={() => handleApprove(izin)}
+                          className="px-3 py-1 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                        >
+                          Setujui
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const catatan = window.prompt('Catatan penolakan:')
+                            if (catatan !== null) {
+                              await handleReject(izin, catatan)
+                            }
+                          }}
+                          className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors"
+                        >
+                          Tolak
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {izin.catatan && (
                     <div className="mt-2 ml-16 p-2 bg-surface-container-high rounded-lg">

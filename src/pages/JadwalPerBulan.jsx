@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 const daysOfWeek = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
 const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 const allSholat = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya', 'Jumat']
 
 export default function JadwalPerBulan() {
+  const { profile } = useAuth()
   const [petugasList, setPetugasList] = useState([])
   const [jadwalBulanan, setJadwalBulanan] = useState([])
   const [loading, setLoading] = useState(true)
@@ -22,6 +24,8 @@ export default function JadwalPerBulan() {
     muadzin_cadangan_id: '',
     is_jumat_manual: false,
   })
+
+  const canEdit = profile?.role === 'super_admin'
 
   const imamList = petugasList.filter((p) => p.role === 'imam')
   const muadzinList = petugasList.filter((p) => p.role === 'muadzin')
@@ -273,16 +277,18 @@ export default function JadwalPerBulan() {
         >
           Jadwal
         </button>
-        <button
-          onClick={() => setActiveTab('buat')}
-          className={`px-6 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors ${
-            activeTab === 'buat'
-              ? 'bg-primary-container text-white'
-              : 'bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
-          }`}
-        >
-          Buat Jadwal
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setActiveTab('buat')}
+            className={`px-6 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors ${
+              activeTab === 'buat'
+                ? 'bg-primary-container text-white'
+                : 'bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+            }`}
+          >
+            Buat Jadwal
+          </button>
+        )}
       </div>
 
       {activeTab === 'jadwal' && (
@@ -405,12 +411,19 @@ export default function JadwalPerBulan() {
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
-        </div>
+         </div>
+       )}
+       {activeTab === 'buat' && !canEdit && (
+         <div className="p-8 text-center">
+           <p className="font-body-md text-body-md text-on-surface-variant">
+             Anda tidak memiliki akses untuk membuat jadwal. Hubungi Super Admin.
+           </p>
+         </div>
+       )}
+     </div>
       )}
 
-      {activeTab === 'buat' && (
+      {activeTab === 'buat' && canEdit && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendar */}
           <div className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6">

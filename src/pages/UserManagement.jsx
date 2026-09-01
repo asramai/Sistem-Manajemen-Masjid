@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useNavigate, Navigate } from 'react-router-dom'
 
 const petugasRoles = ['imam', 'muadzin', 'bilal', 'marbot']
 const honorTypes = ['per_hadir', 'bulanan']
@@ -468,7 +469,12 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, title, subtitle }) {
 }
 
 export default function UserManagement() {
-  const { signOut } = useAuth()
+  const { profile, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  if (profile?.role !== 'super_admin') {
+    return <Navigate to="/profil" replace />
+  }
   const [users, setUsers] = useState([])
   const [petugasList, setPetugasList] = useState([])
   const [profilMasjid, setProfilMasjid] = useState(null)

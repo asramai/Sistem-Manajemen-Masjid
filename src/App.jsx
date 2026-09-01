@@ -14,34 +14,56 @@ import BuatAkunPetugas from './pages/BuatAkunPetugas'
 import HomePage from './pages/HomePage'
 import CetakLaporanGaji from './pages/CetakLaporanGaji'
 import CetakDetailLaporanGaji from './pages/CetakDetailLaporanGaji'
+import MyProfile from './pages/MyProfile'
+
+const ROLE = {
+  SUPER_ADMIN: 'super_admin',
+  ADMIN: 'admin',
+  PETUGAS: 'petugas',
+  TAKMIR: 'takmir',
+}
+
+const ACCESS = {
+  [ROLE.SUPER_ADMIN]: {
+    menu: ['beranda', 'presensi', 'laporan', 'profil', 'transport', 'jadwal', 'buat-akun', 'rekap', 'jadwal-saya', 'izin'],
+    profilTabs: true,
+  },
+  [ROLE.ADMIN]: {
+    menu: ['beranda', 'jadwal', 'presensi', 'laporan', 'izin', 'profil'],
+    profilTabs: false,
+  },
+  [ROLE.PETUGAS]: {
+    menu: ['beranda', 'jadwal-saya', 'izin', 'rekap', 'profil'],
+    profilTabs: false,
+  },
+  [ROLE.TAKMIR]: {
+    menu: ['beranda', 'jadwal', 'laporan', 'profil'],
+    profilTabs: false,
+  },
+}
+
+const MENU_ITEMS = {
+  beranda: { label: 'Beranda', icon: 'home', path: '/' },
+  'jadwal-saya': { label: 'Jadwal Saya', icon: 'calendar_today', path: '/jadwal-saya' },
+  izin: { label: 'Izin', icon: 'event_busy', path: '/konfirmasi-izin' },
+  rekap: { label: 'Rekap', icon: 'history', path: '/rekap' },
+  profil: { label: 'Profil', icon: 'person', path: '/profil' },
+  presensi: { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
+  laporan: { label: 'Laporan', icon: 'description', path: '/laporan' },
+  transport: { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
+  jadwal: { label: 'Jadwal', icon: 'calendar_month', path: '/jadwal' },
+  'buat-akun': { label: 'Buat Akun', icon: 'person_add', path: '/buat-akun' },
+}
 
 function TopAppBar({ currentPath, onLogout, profile }) {
-  const isLaporan = currentPath === '/laporan'
-  const isProfil = currentPath === '/profil'
-  const isBiaya = currentPath === '/biaya-transport'
-  const isJadwal = currentPath === '/jadwal' || currentPath === '/buat-akun'
-  const headerClass = isLaporan || isProfil || isBiaya || isJadwal ? 'bg-primary dark:bg-primary-container' : 'bg-primary-container dark:bg-primary-container'
-
-  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
-
-  const navItems = isAdmin
-    ? [
-        { label: 'Beranda', icon: 'home', path: '/' },
-        { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
-        { label: 'Laporan', icon: 'description', path: '/laporan' },
-        { label: 'Profil', icon: 'person', path: '/profil' },
-        { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
-        { label: 'Jadwal', icon: 'calendar_month', path: '/jadwal' },
-        { label: 'Buat Akun', icon: 'person_add', path: '/buat-akun' },
-      ]
-    : [
-        { label: 'Beranda', icon: 'home', path: '/' },
-        { label: 'Jadwal Saya', icon: 'calendar_today', path: '/jadwal-saya' },
-        { label: 'Izin', icon: 'event_busy', path: '/konfirmasi-izin' },
-      ]
+  const role = profile?.role || ROLE.PETUGAS
+  const allowedKeys = ACCESS[role]?.menu || []
+  const navItems = allowedKeys
+    .map((key) => MENU_ITEMS[key])
+    .filter(Boolean)
 
   return (
-    <header className={`${headerClass} text-on-primary dark:text-on-primary-container font-h2 text-h2 sticky top-0 full-width shadow-sm flex justify-between items-center px-margin-mobile py-4 w-full z-40`}>
+    <header className="bg-primary-container dark:bg-primary-container font-h2 text-h2 sticky top-0 full-width shadow-sm flex justify-between items-center px-margin-mobile py-4 w-full z-40">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden">
           <img
@@ -84,18 +106,11 @@ function TopAppBar({ currentPath, onLogout, profile }) {
 
 function MoreMenu({ isOpen, onClose, currentPath, onLogout, profile }) {
   const navigate = useNavigate()
-  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
-
-  const moreItems = isAdmin
-    ? [
-        { label: 'Profil', icon: 'person', path: '/profil' },
-        { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
-        { label: 'Jadwal', icon: 'calendar_month', path: '/jadwal' },
-        { label: 'Buat Akun', icon: 'person_add', path: '/buat-akun' },
-      ]
-    : [
-        { label: 'Laporan', icon: 'description', path: '/laporan' },
-      ]
+  const role = profile?.role || ROLE.PETUGAS
+  const allowedKeys = ACCESS[role]?.menu || []
+  const moreItems = allowedKeys
+    .map((key) => MENU_ITEMS[key])
+    .filter(Boolean)
 
   if (!isOpen) return null
 
@@ -138,19 +153,12 @@ function MoreMenu({ isOpen, onClose, currentPath, onLogout, profile }) {
 
 function BottomNav({ currentPath, onLogout, profile, onMoreClick }) {
   const navigate = useNavigate()
-  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
-
-  const mainItems = isAdmin
-    ? [
-        { label: 'Beranda', icon: 'home', path: '/' },
-        { label: 'Presensi', icon: 'fact_check', path: '/presensi' },
-        { label: 'Laporan', icon: 'description', path: '/laporan' },
-      ]
-    : [
-        { label: 'Beranda', icon: 'home', path: '/' },
-        { label: 'Jadwal Saya', icon: 'calendar_today', path: '/jadwal-saya' },
-        { label: 'Izin', icon: 'event_busy', path: '/konfirmasi-izin' },
-      ]
+  const role = profile?.role || ROLE.PETUGAS
+  const allowedKeys = ACCESS[role]?.menu || []
+  const mainItems = allowedKeys
+    .map((key) => MENU_ITEMS[key])
+    .filter(Boolean)
+    .slice(0, 3)
 
   return (
     <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-surface border-t border-outline-variant shadow-lg md:hidden">
@@ -249,7 +257,15 @@ export default function App() {
     navigate('/login')
   }
 
-  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+  const role = profile?.role || ROLE.PETUGAS
+  const allowedPaths = new Set(ACCESS[role]?.menu || [])
+
+  const isAllowed = (path) => {
+    if (!session) return false
+    if (role === ROLE.SUPER_ADMIN) return true
+    if (path === '/profil') return true
+    return allowedPaths.has(path.replace('/', '')) || allowedPaths.has(path)
+  }
 
   const isCetakLaporan = currentPath === '/cetak-laporan' || currentPath === '/cetak-detail'
 
@@ -258,17 +274,17 @@ export default function App() {
       {session && !isCetakLaporan && <TopAppBar currentPath={currentPath} onLogout={handleLogout} profile={profile} />}
       <main className="flex-grow">
         {currentPath === '/login' && <LoginPage />}
-        {currentPath === '/laporan' && <LaporanGaji />}
-        {currentPath === '/cetak-laporan' && <CetakLaporanGaji />}
-        {currentPath === '/cetak-detail' && <CetakDetailLaporanGaji />}
-        {currentPath === '/presensi' && (isAdmin ? <AttendancePage /> : <Navigate to="/" replace />)}
-        {currentPath === '/profil' && <UserManagement />}
-        {currentPath === '/rekap' && <RekapKehadiranSaya />}
-        {currentPath === '/biaya-transport' && <BiayaTransport />}
-        {currentPath === '/jadwal' && <JadwalPerBulan />}
-        {currentPath === '/jadwal-saya' && <JadwalSaya />}
-        {currentPath === '/konfirmasi-izin' && <KonfirmasiIzin />}
-        {currentPath === '/buat-akun' && <BuatAkunPetugas />}
+        {currentPath === '/laporan' && isAllowed('/laporan') && <LaporanGaji />}
+        {currentPath === '/cetak-laporan' && isAllowed('/laporan') && <CetakLaporanGaji />}
+        {currentPath === '/cetak-detail' && isAllowed('/laporan') && <CetakDetailLaporanGaji />}
+        {currentPath === '/presensi' && isAllowed('/presensi') && <AttendancePage />}
+        {currentPath === '/profil' && (role === ROLE.SUPER_ADMIN ? <UserManagement /> : <MyProfile />)}
+        {currentPath === '/rekap' && isAllowed('/rekap') && <RekapKehadiranSaya />}
+        {currentPath === '/biaya-transport' && isAllowed('/transport') && <BiayaTransport />}
+        {currentPath === '/jadwal' && isAllowed('/jadwal') && <JadwalPerBulan />}
+        {currentPath === '/jadwal-saya' && isAllowed('/jadwal-saya') && <JadwalSaya />}
+        {currentPath === '/konfirmasi-izin' && isAllowed('/izin') && <KonfirmasiIzin />}
+        {currentPath === '/buat-akun' && isAllowed('/buat-akun') && <BuatAkunPetugas />}
         {currentPath === '/' && <HomePage />}
       </main>
       {session && !isCetakLaporan && (
