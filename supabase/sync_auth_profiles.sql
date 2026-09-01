@@ -28,4 +28,4 @@ CREATE TRIGGER on_auth_user_created
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
 
 -- Policy insert untuk profiles
-CREATE POLICY "Profiles insertable by authenticated users" ON public.profiles FOR INSERT TO authenticated USING (true);
+CREATE POLICY "Profiles insertable by authenticated users" ON public.profiles FOR INSERT TO authenticated WITH CHECK (true);

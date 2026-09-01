@@ -1,4 +1,6 @@
 -- Insert profiles untuk user yang sudah ada di auth.users tapi belum ada di profiles
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+
 INSERT INTO public.profiles (id, nama, role, phone, email)
 SELECT 
   id,
