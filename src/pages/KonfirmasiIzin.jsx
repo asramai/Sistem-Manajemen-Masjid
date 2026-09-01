@@ -43,6 +43,7 @@ export default function KonfirmasiIzin() {
     alasan: '',
     tanggal: '',
   })
+  const [petugasMap, setPetugasMap] = useState({})
 
   const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin'
 
@@ -84,14 +85,7 @@ export default function KonfirmasiIzin() {
     setLoading(true)
     let query = supabase
       .from('konfirmasi_izin')
-      .select(`
-        *,
-        petugas:petugas_id (
-          id,
-          nama,
-          role
-        )
-      `)
+      .select('*')
       .order('tanggal', { ascending: false })
 
     if (activeTab === 'pengajuan' && !isAdmin && petugasId) {
@@ -109,7 +103,28 @@ export default function KonfirmasiIzin() {
     }
 
     const { data } = await query
-    setIzinList(data || [])
+    let izinResult = data || []
+
+    if (isAdmin && izinResult.length > 0) {
+      const petugasIds = [...new Set(izinResult.map((item) => item.petugas_id).filter(Boolean))]
+      console.log('Petugas IDs from izin:', petugasIds)
+      if (petugasIds.length > 0) {
+        const { data: petugasData } = await supabase
+          .from('petugas')
+          .select('id, nama, role')
+          .in('id', petugasIds)
+
+        console.log('Petugas data fetched:', petugasData)
+
+        const map = {}
+        ;(petugasData || []).forEach((p) => {
+          map[p.id] = p
+        })
+        setPetugasMap(map)
+      }
+    }
+
+    setIzinList(izinResult)
     setLoading(false)
   }
 
@@ -502,9 +517,9 @@ export default function KonfirmasiIzin() {
                             Lihat Bukti
                           </a>
                         )}
-                        {isAdmin && izin.petugas && (
+                        {isAdmin && izin.petugas_id && petugasMap[izin.petugas_id] && (
                           <p className="text-xs text-on-surface-variant mt-1">
-                            <span className="font-semibold">Pengaju:</span> {izin.petugas.nama} <span className="text-[10px] uppercase font-semibold text-primary">({izin.petugas.role})</span>
+                            <span className="font-semibold">Pengaju:</span> {petugasMap[izin.petugas_id].nama} <span className="text-[10px] uppercase font-semibold text-primary">({petugasMap[izin.petugas_id].role})</span>
                           </p>
                         )}
                       </div>
