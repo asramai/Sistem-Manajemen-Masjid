@@ -1,9 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
+const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+
+const statusStyles = {
+  pending: 'bg-amber-100 text-amber-700 border border-amber-200',
+  approved: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+  rejected: 'bg-red-100 text-red-700 border border-red-200',
+  kembali: 'bg-orange-100 text-orange-700 border border-orange-200',
+}
+
+const statusLabels = {
+  pending: 'Menunggu',
+  approved: 'Disetujui',
+  rejected: 'Ditolak',
+  kembali: 'Dikembalikan',
+}
+
 export default function KonfirmasiIzin() {
   const { profile, session } = useAuth()
+  const [activeTab, setActiveTab] = useState('pengajuan')
   const [izinList, setIzinList] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -17,13 +34,23 @@ export default function KonfirmasiIzin() {
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef(null)
   const [petugasId, setPetugasId] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [actionNotes, setActionNotes] = useState({})
+
+  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin'
 
   useEffect(() => {
     if (session?.user?.id) {
-      fetchIzin()
       fetchPetugasId()
     }
   }, [session])
+
+  useEffect(() => {
+    if (petugasId || isAdmin) {
+      fetchIzin()
+    }
+  }, [petugasId, selectedMonth, selectedYear, activeTab])
 
   const fetchPetugasId = async () => {
     if (!session?.user?.id) return
@@ -54,24 +81,24 @@ export default function KonfirmasiIzin() {
       .select('*')
       .order('tanggal', { ascending: false })
 
-    if (profile?.role !== 'super_admin' && profile?.role !== 'admin') {
-      if (!petugasId) {
-        setLoading(false)
-        return
-      }
+    if (activeTab === 'pengajuan' && !isAdmin && petugasId) {
       query = query.eq('petugas_id', petugasId)
+    } else if (activeTab === 'validasi' && isAdmin) {
+      query = query.eq('status', 'pending')
+    } else if (activeTab === 'riwayat') {
+      const startDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
+      const nextMonth = selectedMonth + 2
+      const endDate = `${selectedYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
+      query = query.gte('tanggal', startDate).lt('tanggal', endDate)
+      if (!isAdmin && petugasId) {
+        query = query.eq('petugas_id', petugasId)
+      }
     }
 
     const { data } = await query
     setIzinList(data || [])
     setLoading(false)
   }
-
-  useEffect(() => {
-    if (petugasId) {
-      fetchIzin()
-    }
-  }, [petugasId])
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
@@ -134,21 +161,24 @@ export default function KonfirmasiIzin() {
   }
 
   const handleApprove = async (izin) => {
+    const catatan = actionNotes[izin.id]?.trim() || 'Disetujui'
     const { error } = await supabase
       .from('konfirmasi_izin')
-      .update({ status: 'approved', catatan: 'Disetujui' })
+      .update({ status: 'approved', catatan })
       .eq('id', izin.id)
 
     if (error) {
       alert('Gagal menyetujui: ' + error.message)
     } else {
+      setActionNotes((prev) => ({ ...prev, [izin.id]: '' }))
       fetchIzin()
     }
   }
 
-  const handleReject = async (izin, catatan) => {
-    if (!catatan.trim()) {
-      alert('Masukkan catatan penolakan')
+  const handleReject = async (izin) => {
+    const catatan = actionNotes[izin.id]?.trim()
+    if (!catatan) {
+      alert('Masukkan alasan penolakan')
       return
     }
     const { error } = await supabase
@@ -159,55 +189,111 @@ export default function KonfirmasiIzin() {
     if (error) {
       alert('Gagal menolak: ' + error.message)
     } else {
+      setActionNotes((prev) => ({ ...prev, [izin.id]: '' }))
       fetchIzin()
     }
   }
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-amber-100 text-amber-700 border border-amber-200'
-      case 'approved':
-        return 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-      case 'rejected':
-        return 'bg-red-100 text-red-700 border border-red-200'
-      default:
-        return 'bg-gray-100 text-gray-700'
+  const handleReturn = async (izin) => {
+    const catatan = actionNotes[izin.id]?.trim()
+    if (!catatan) {
+      alert('Masukkan alasan pengembalian')
+      return
+    }
+    const { error } = await supabase
+      .from('konfirmasi_izin')
+      .update({ status: 'kembali', catatan })
+      .eq('id', izin.id)
+
+    if (error) {
+      alert('Gagal mengembalikan: ' + error.message)
+    } else {
+      setActionNotes((prev) => ({ ...prev, [izin.id]: '' }))
+      fetchIzin()
     }
   }
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'Menunggu'
-      case 'approved':
-        return 'Disetujui'
-      case 'rejected':
-        return 'Ditolak'
-      default:
-        return status
-    }
-  }
+  const currentYear = new Date().getFullYear()
+  const years = useMemo(() => {
+    const startYear = currentYear - 2
+    const endYear = currentYear + 1
+    return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i)
+  }, [currentYear])
 
   return (
     <div className="max-w-container-max mx-auto px-margin-mobile md:px-gutter pt-8 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
         <div>
-          <h1 className="font-h1 text-h1 text-on-surface mb-2">Konfirmasi Izin</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">Kirim konfirmasi izin tidak hadir. Jika tidak dikonfirmasi, akan tercatat sebagai Alpha.</p>
+          <h1 className="font-h1 text-h1 text-on-surface mb-2">Izin</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant">
+            {isAdmin ? 'Kelola pengajuan dan riwayat izin petugas.' : 'Ajukan izin tidak hadir dan pantau riwayat izin Anda.'}
+          </p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-primary text-on-primary hover:bg-primary-container transition-colors duration-200 px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm"
-        >
-          <span className="material-symbols-outlined">add</span>
-          {showForm ? 'Batal' : 'Kirim Izin'}
-        </button>
+        {!isAdmin && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-primary text-on-primary hover:bg-primary-container transition-colors duration-200 px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm"
+          >
+            <span className="material-symbols-outlined">add</span>
+            {showForm ? 'Batal' : 'Kirim Izin'}
+          </button>
+        )}
       </div>
 
-      {/* Form */}
-      {showForm && (
+      {/* Tabs */}
+      <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2 mb-6">
+        {isAdmin ? (
+          <>
+            <button
+              onClick={() => setActiveTab('validasi')}
+              className={`px-6 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors ${
+                activeTab === 'validasi'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+            >
+              Validasi Izin
+            </button>
+            <button
+              onClick={() => setActiveTab('riwayat')}
+              className={`px-6 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors ${
+                activeTab === 'riwayat'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+            >
+              Riwayat Izin
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setActiveTab('pengajuan')}
+              className={`px-6 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors ${
+                activeTab === 'pengajuan'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+            >
+              Pengajuan Izin
+            </button>
+            <button
+              onClick={() => setActiveTab('riwayat')}
+              className={`px-6 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors ${
+                activeTab === 'riwayat'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+            >
+              Riwayat Izin
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Form for Petugas */}
+      {!isAdmin && showForm && activeTab === 'pengajuan' && (
         <div className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 mb-6">
           <h3 className="font-h3 text-h3 text-on-surface mb-4">Form Konfirmasi Izin</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -295,6 +381,40 @@ export default function KonfirmasiIzin() {
         </div>
       )}
 
+      {/* Filter for Riwayat */}
+      {activeTab === 'riwayat' && (
+        <div className="flex items-center gap-3 mb-6">
+          <div className="relative inline-block text-left">
+            <select
+              className="block w-full pl-4 pr-10 py-2 text-base border-outline-variant focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-lg glass-card text-on-surface font-label-md cursor-pointer appearance-none"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            >
+              {MONTHS.map((month, index) => (
+                <option key={month} value={index}>{month}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+              <span className="material-symbols-outlined text-xl">expand_more</span>
+            </div>
+          </div>
+          <div className="relative inline-block text-left">
+            <select
+              className="block w-full pl-4 pr-10 py-2 text-base border-outline-variant focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-lg glass-card text-on-surface font-label-md cursor-pointer appearance-none"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+              <span className="material-symbols-outlined text-xl">expand_more</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Izin List */}
       <div className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl overflow-hidden">
         {loading ? (
@@ -304,7 +424,9 @@ export default function KonfirmasiIzin() {
         ) : izinList.length === 0 ? (
           <div className="p-8 text-center">
             <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-4">check_circle</span>
-            <p className="font-body-md text-body-md text-on-surface-variant">Belum ada konfirmasi izin.</p>
+            <p className="font-body-md text-body-md text-on-surface-variant">
+              {activeTab === 'validasi' ? 'Tidak ada pengajuan izin yang menunggu validasi.' : activeTab === 'pengajuan' ? 'Belum ada pengajuan izin.' : 'Belum ada riwayat izin untuk bulan ini.'}
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-outline-variant">
@@ -331,36 +453,46 @@ export default function KonfirmasiIzin() {
                         )}
                       </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusBadge(izin.status)}`}>
-                      {getStatusLabel(izin.status)}
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${statusStyles[izin.status] || statusStyles['pending']}`}>
+                      {statusLabels[izin.status] || izin.status}
                     </span>
-                    {(profile?.role === 'super_admin' || profile?.role === 'admin') && izin.status === 'pending' && (
-                      <div className="flex gap-2 ml-2">
-                        <button
-                          onClick={() => handleApprove(izin)}
-                          className="px-3 py-1 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
-                        >
-                          Setujui
-                        </button>
-                        <button
-                          onClick={async () => {
-                            const catatan = window.prompt('Catatan penolakan:')
-                            if (catatan !== null) {
-                              await handleReject(izin, catatan)
-                            }
-                          }}
-                          className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors"
-                        >
-                          Tolak
-                        </button>
-                      </div>
-                    )}
                   </div>
                   {izin.catatan && (
                     <div className="mt-2 ml-16 p-2 bg-surface-container-high rounded-lg">
                       <p className="text-sm text-on-surface-variant">
                         <strong>Catatan Admin:</strong> {izin.catatan}
                       </p>
+                    </div>
+                  )}
+                  {(activeTab === 'validasi' || activeTab === 'riwayat') && isAdmin && izin.status === 'pending' && (
+                    <div className="mt-3 ml-16 space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Tambahkan catatan..."
+                        value={actionNotes[izin.id] || ''}
+                        onChange={(e) => setActionNotes((prev) => ({ ...prev, [izin.id]: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-sm text-body-sm"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApprove(izin)}
+                          className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                        >
+                          Setujui
+                        </button>
+                        <button
+                          onClick={() => handleReturn(izin)}
+                          className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-semibold hover:bg-orange-700 transition-colors"
+                        >
+                          Kembalikan
+                        </button>
+                        <button
+                          onClick={() => handleReject(izin)}
+                          className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors"
+                        >
+                          Tolak
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
