@@ -616,6 +616,7 @@ export default function UserManagement() {
       setUserForm({ nama: '', email: '', password: '', role: 'admin', phone: '' })
       setUserModalOpen(false)
       fetchData()
+      setTimeout(() => window.location.reload(), 1200)
     } catch (err) {
       alert('Gagal membuat akun: ' + (err.message || err))
     } finally {
