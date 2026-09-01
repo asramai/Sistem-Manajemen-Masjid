@@ -30,11 +30,17 @@ export default function RekapKehadiranSaya() {
     if (!session?.user?.id) return
     setLoading(true)
 
-    const { data: petugasData } = await supabase
+    const { data: petugasData, error: petugasError } = await supabase
       .from('petugas')
       .select('*')
       .eq('auth_user_id', session.user.id)
       .single()
+
+    if (petugasError) {
+      console.error('Error fetching petugas:', petugasError)
+      setLoading(false)
+      return
+    }
 
     setPetugas(petugasData)
 
@@ -47,13 +53,23 @@ export default function RekapKehadiranSaya() {
     const nextMonth = selectedMonth + 2
     const endDate = `${selectedYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
 
-    const { data: presensiData } = await supabase
+    console.log('Fetching presensi with:', { petugasId: petugasData.id, startDate, endDate })
+
+    const { data: presensiData, error: presensiError } = await supabase
       .from('presensi')
       .select('*, jadwal:nama_sholat')
       .eq('petugas_id', petugasData.id)
       .gte('tanggal', startDate)
       .lt('tanggal', endDate)
       .order('tanggal', { ascending: false })
+
+    if (presensiError) {
+      console.error('Error fetching presensi:', presensiError)
+      setLoading(false)
+      return
+    }
+
+    console.log('Presensi data:', presensiData)
 
     if (presensiData) {
       const hadir = presensiData.filter((p) => p.status === 'hadir').length
