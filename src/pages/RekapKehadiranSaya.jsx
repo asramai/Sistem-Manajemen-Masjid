@@ -34,7 +34,7 @@ export default function RekapKehadiranSaya() {
       .from('petugas')
       .select('*')
       .eq('auth_user_id', session.user.id)
-      .single()
+      .maybeSingle()
 
     if (petugasError) {
       console.error('Error fetching petugas:', petugasError)
@@ -42,12 +42,14 @@ export default function RekapKehadiranSaya() {
       return
     }
 
-    setPetugas(petugasData)
-
     if (!petugasData) {
+      console.warn('No petugas found for user:', session.user.id)
+      setPetugas(null)
       setLoading(false)
       return
     }
+
+    setPetugas(petugasData)
 
     const startDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
     const nextMonth = selectedMonth + 2
@@ -162,63 +164,74 @@ export default function RekapKehadiranSaya() {
       </div>
 
       {/* Left Column: Profile & Stats */}
-      <div className="col-span-1 md:col-span-4 flex flex-col gap-md">
-        {/* Profile Summary Card */}
-        <div className="glass-card rounded-xl p-6 relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
-          <div className="flex items-center gap-4 mb-6 relative z-10">
-            <div className="w-16 h-16 rounded-full bg-surface-container-high border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
-              <span className="material-symbols-outlined text-3xl text-primary">person</span>
+      {petugas ? (
+        <div className="col-span-1 md:col-span-4 flex flex-col gap-md">
+          {/* Profile Summary Card */}
+          <div className="glass-card rounded-xl p-6 relative overflow-hidden">
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
+            <div className="flex items-center gap-4 mb-6 relative z-10">
+              <div className="w-16 h-16 rounded-full bg-surface-container-high border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
+                <span className="material-symbols-outlined text-3xl text-primary">person</span>
+              </div>
+              <div>
+                <h3 className="font-title-md text-title-md text-on-surface">{profile?.nama || 'User'}</h3>
+                <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-secondary-container text-on-secondary-container">
+                  {petugas?.role || 'Petugas'}
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="font-title-md text-title-md text-on-surface">{profile?.nama || 'User'}</h3>
-              <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-secondary-container text-on-secondary-container">
-                {petugas?.role || 'Petugas'}
+            <div className="border-t border-outline-variant/30 pt-4 mt-2 relative z-10">
+              <p className="font-label-md text-label-md text-on-surface-variant mb-1 uppercase text-xs">Honor Per Hadir</p>
+              <p className="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold">
+                {petugas ? formatCurrency(petugas.honor_per_hadir || 0) : 'Rp 0'}
+              </p>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-md">
+            <div className="glass-card rounded-xl p-4 flex flex-col justify-between">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              </div>
+              <div>
+                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{stats.hadir}</p>
+                <p className="font-label-md text-label-md text-on-surface-variant mt-1">Total Hadir</p>
+              </div>
+            </div>
+            <div className="glass-card rounded-xl p-4 flex flex-col justify-between">
+              <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center mb-3">
+                <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
+              </div>
+              <div>
+                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{stats.izin}</p>
+                <p className="font-label-md text-label-md text-on-surface-variant mt-1">Total Izin</p>
               </div>
             </div>
           </div>
-          <div className="border-t border-outline-variant/30 pt-4 mt-2 relative z-10">
-            <p className="font-label-md text-label-md text-on-surface-variant mb-1 uppercase text-xs">Honor Per Hadir</p>
-            <p className="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold">
-              {petugas ? formatCurrency(petugas.honor_per_hadir || 0) : 'Rp 0'}
+
+          {/* Total Honor Card */}
+          <div className="bg-primary text-on-primary rounded-xl p-6 shadow-md relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
+            <div className="relative z-10 flex flex-col items-start">
+              <div className="flex items-center gap-2 mb-2 text-on-primary/80">
+                <span className="material-symbols-outlined text-sm">account_balance_wallet</span>
+                <span className="font-label-md text-label-md">Total Honor Bulan Ini</span>
+              </div>
+              <p className="font-display-lg text-display-lg font-bold">{formatCurrency(totalHonor)}</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="col-span-1 md:col-span-4">
+          <div className="glass-card rounded-xl p-8 text-center">
+            <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-4">person_off</span>
+            <p className="font-body-md text-body-md text-on-surface-variant">
+              Data petugas tidak ditemukan. Hubungi admin untuk menghubungkan akun Anda dengan data petugas.
             </p>
           </div>
         </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-md">
-          <div className="glass-card rounded-xl p-4 flex flex-col justify-between">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-              <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-            </div>
-            <div>
-              <p className="font-display-lg text-display-lg text-on-surface leading-tight">{stats.hadir}</p>
-              <p className="font-label-md text-label-md text-on-surface-variant mt-1">Total Hadir</p>
-            </div>
-          </div>
-          <div className="glass-card rounded-xl p-4 flex flex-col justify-between">
-            <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center mb-3">
-              <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
-            </div>
-            <div>
-              <p className="font-display-lg text-display-lg text-on-surface leading-tight">{stats.izin}</p>
-              <p className="font-label-md text-label-md text-on-surface-variant mt-1">Total Izin</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Total Honor Card */}
-        <div className="bg-primary text-on-primary rounded-xl p-6 shadow-md relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
-          <div className="relative z-10 flex flex-col items-start">
-            <div className="flex items-center gap-2 mb-2 text-on-primary/80">
-              <span className="material-symbols-outlined text-sm">account_balance_wallet</span>
-              <span className="font-label-md text-label-md">Total Honor Bulan Ini</span>
-            </div>
-            <p className="font-display-lg text-display-lg font-bold">{formatCurrency(totalHonor)}</p>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Right Column: History List */}
       <div className="col-span-1 md:col-span-8">
