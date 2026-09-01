@@ -315,7 +315,7 @@ export default function RekapKehadiranSaya() {
                 <span className="material-symbols-outlined text-tertiary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>commute</span>
               </div>
               <div>
-                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{formatCurrency(rekap.transportImam)}</p>
+                <p className="font-title-md text-title-md text-on-surface leading-tight text-right tabular-nums">{formatCurrency(rekap.transportImam)}</p>
                 <p className="font-label-md text-label-md text-on-surface-variant mt-1">Transport Imam</p>
               </div>
             </div>
@@ -324,7 +324,7 @@ export default function RekapKehadiranSaya() {
                 <span className="material-symbols-outlined text-tertiary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>commute</span>
               </div>
               <div>
-                <p className="font-display-lg text-display-lg text-on-surface leading-tight">{formatCurrency(rekap.transportMuadzin)}</p>
+                <p className="font-title-md text-title-md text-on-surface leading-tight text-right tabular-nums">{formatCurrency(rekap.transportMuadzin)}</p>
                 <p className="font-label-md text-label-md text-on-surface-variant mt-1">Transport Muadzin</p>
               </div>
             </div>
