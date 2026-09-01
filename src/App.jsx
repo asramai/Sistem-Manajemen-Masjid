@@ -25,7 +25,7 @@ const ROLE = {
 
 const ACCESS = {
   [ROLE.SUPER_ADMIN]: {
-    menu: ['beranda', 'presensi', 'laporan', 'profil', 'transport', 'jadwal', 'buat-akun', 'rekap', 'jadwal-saya', 'izin'],
+    menu: ['beranda', 'presensi', 'jadwal', 'laporan', 'transport', 'izin', 'rekap', 'buat-akun', 'profil'],
     profilTabs: true,
   },
   [ROLE.ADMIN]: {
@@ -40,6 +40,28 @@ const ACCESS = {
     menu: ['beranda', 'jadwal', 'laporan', 'profil'],
     profilTabs: false,
   },
+}
+
+const MENU_GROUPS = {
+  [ROLE.SUPER_ADMIN]: [
+    { key: 'utama', items: ['beranda', 'presensi', 'jadwal'] },
+    { key: 'keuangan', items: ['laporan', 'transport'] },
+    { key: 'manajemen', items: ['izin', 'rekap', 'buat-akun', 'profil'] },
+  ],
+  [ROLE.ADMIN]: [
+    { key: 'utama', items: ['beranda', 'jadwal', 'presensi'] },
+    { key: 'keuangan', items: ['laporan'] },
+    { key: 'manajemen', items: ['izin', 'profil'] },
+  ],
+  [ROLE.PETUGAS]: [
+    { key: 'utama', items: ['beranda', 'jadwal-saya'] },
+    { key: 'manajemen', items: ['izin', 'rekap', 'profil'] },
+  ],
+  [ROLE.TAKMIR]: [
+    { key: 'utama', items: ['beranda', 'jadwal'] },
+    { key: 'keuangan', items: ['laporan'] },
+    { key: 'manajemen', items: ['profil'] },
+  ],
 }
 
 const MENU_ITEMS = {
@@ -57,10 +79,8 @@ const MENU_ITEMS = {
 
 function TopAppBar({ currentPath, onLogout, profile }) {
   const role = profile?.role || ROLE.PETUGAS
-  const allowedKeys = ACCESS[role]?.menu || []
-  const navItems = allowedKeys
-    .map((key) => MENU_ITEMS[key])
-    .filter(Boolean)
+  const groups = MENU_GROUPS[role] || []
+  const navItems = groups.flatMap((group) => group.items.map((key) => MENU_ITEMS[key]).filter(Boolean))
 
   return (
     <header className="bg-primary-container dark:bg-primary-container font-h2 text-h2 sticky top-0 full-width shadow-sm flex justify-between items-center px-margin-mobile py-4 w-full z-40">
@@ -75,21 +95,30 @@ function TopAppBar({ currentPath, onLogout, profile }) {
         <span className="font-h2 text-h2 font-semibold">Sistem Manajemen Masjid</span>
       </div>
       <div className="hidden md:flex gap-6 items-center">
-        {navItems.map((item) => (
-          <a
-            key={item.label}
-            href={item.path}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
-              currentPath === item.path
-                ? 'text-on-primary font-bold bg-primary-container/20'
-                : 'text-on-primary/80 hover:bg-primary-container/20'
-            }`}
-          >
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: currentPath === item.path ? "'FILL' 1" : '' }}>
-              {item.icon}
-            </span>
-            <span className="font-label-md text-label-md">{item.label}</span>
-          </a>
+        {groups.map((group) => (
+          <div key={group.key} className="flex items-center gap-2">
+            {group.items.map((key) => {
+              const item = MENU_ITEMS[key]
+              if (!item) return null
+              return (
+                <a
+                  key={item.label}
+                  href={item.path}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                    currentPath === item.path
+                      ? 'text-on-primary font-bold bg-primary-container/20'
+                      : 'text-on-primary/80 hover:bg-primary-container/20'
+                  }`}
+                >
+                  <span className="material-symbols-outlined" style={{ fontVariationSettings: currentPath === item.path ? "'FILL' 1" : '' }}>
+                    {item.icon}
+                  </span>
+                  <span className="font-label-md text-label-md">{item.label}</span>
+                </a>
+              )
+            })}
+            {group.key !== 'manajemen' && <div className="w-px h-6 bg-primary/20 mx-2" />}
+          </div>
         ))}
         <button
           onClick={onLogout}
@@ -107,10 +136,7 @@ function TopAppBar({ currentPath, onLogout, profile }) {
 function MoreMenu({ isOpen, onClose, currentPath, onLogout, profile }) {
   const navigate = useNavigate()
   const role = profile?.role || ROLE.PETUGAS
-  const allowedKeys = ACCESS[role]?.menu || []
-  const moreItems = allowedKeys
-    .map((key) => MENU_ITEMS[key])
-    .filter(Boolean)
+  const groups = MENU_GROUPS[role] || []
 
   if (!isOpen) return null
 
@@ -120,23 +146,32 @@ function MoreMenu({ isOpen, onClose, currentPath, onLogout, profile }) {
       <div className="relative w-full bg-surface rounded-t-2xl shadow-xl border-t border-outline-variant p-6 pb-24" onClick={(e) => e.stopPropagation()}>
         <div className="w-12 h-1 bg-outline-variant rounded-full mx-auto mb-4"></div>
         <h3 className="font-h3 text-h3 text-on-surface mb-4">Menu Lainnya</h3>
-        <div className="space-y-2">
-          {moreItems.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => {
-                navigate(item.path)
-                onClose()
-              }}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-colors ${
-                currentPath === item.path
-                  ? 'bg-primary-container text-on-primary-container'
-                  : 'hover:bg-surface-container-high'
-              }`}
-            >
-              <span className="material-symbols-outlined">{item.icon}</span>
-              <span className="font-label-md text-label-md">{item.label}</span>
-            </button>
+        <div className="space-y-4">
+          {groups.map((group) => (
+            <div key={group.key}>
+              {group.items.map((key) => {
+                const item = MENU_ITEMS[key]
+                if (!item) return null
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      navigate(item.path)
+                      onClose()
+                    }}
+                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-colors ${
+                      currentPath === item.path
+                        ? 'bg-primary-container text-on-primary-container'
+                        : 'hover:bg-surface-container-high'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined">{item.icon}</span>
+                    <span className="font-label-md text-label-md">{item.label}</span>
+                  </button>
+                )
+              })}
+              {group.key !== 'manajemen' && <div className="h-px bg-outline-variant/50 my-2" />}
+            </div>
           ))}
           <button
             onClick={onLogout}
@@ -154,15 +189,14 @@ function MoreMenu({ isOpen, onClose, currentPath, onLogout, profile }) {
 function BottomNav({ currentPath, onLogout, profile, onMoreClick }) {
   const navigate = useNavigate()
   const role = profile?.role || ROLE.PETUGAS
-  const allowedKeys = ACCESS[role]?.menu || []
-  const mainItems = allowedKeys
+  const groups = MENU_GROUPS[role] || []
+  const utamaItems = (groups.find((g) => g.key === 'utama')?.items || [])
     .map((key) => MENU_ITEMS[key])
     .filter(Boolean)
-    .slice(0, 3)
 
   return (
     <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-surface border-t border-outline-variant shadow-lg md:hidden">
-      {mainItems.map((item) => (
+      {utamaItems.map((item) => (
         <button
           key={item.label}
           onClick={() => navigate(item.path)}
