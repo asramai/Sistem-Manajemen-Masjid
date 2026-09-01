@@ -27,8 +27,10 @@ export default function CetakDetailLaporanGaji() {
   const [roster, setRoster] = useState([])
   const [loading, setLoading] = useState(true)
   const [profil, setProfil] = useState(null)
-  const bulan = Number(new URLSearchParams(window.location.search).get('bulan')) ?? new Date().getMonth()
-  const tahun = Number(new URLSearchParams(window.location.search).get('tahun')) ?? new Date().getFullYear()
+  const rawBulan = new URLSearchParams(window.location.search).get('bulan')
+  const rawTahun = new URLSearchParams(window.location.search).get('tahun')
+  const bulan = rawBulan !== null ? Number(rawBulan) : new Date().getMonth()
+  const tahun = rawTahun !== null ? Number(rawTahun) : new Date().getFullYear()
 
   useEffect(() => {
     fetchData()
@@ -200,111 +202,111 @@ export default function CetakDetailLaporanGaji() {
         </button>
       </div>
 
-      <div id="print-area" className="max-w-5xl mx-auto p-8 print:p-0 print:max-w-none">
+      <div id="print-area" className="max-w-3xl mx-auto p-6 print:p-0 print:max-w-none">
         {/* Kop Surat */}
-        <div className="flex items-center gap-6 mb-6 border-b-2 border-black pb-6">
+        <div className="flex items-center gap-4 mb-3 border-b-2 border-black pb-3">
           {profil?.logo_url && (
-            <img src={profil.logo_url} alt="Logo Masjid" className="w-24 h-24 object-contain shrink-0" />
+            <img src={profil.logo_url} alt="Logo Masjid" className="w-14 h-14 object-contain shrink-0" />
           )}
           <div className="text-center flex-1">
-            <h1 className="text-xl font-bold mb-1">{profil?.nama_masjid || 'Nama Masjid'}</h1>
-            <p className="text-xs mb-0.5">{profil?.alamat || 'Alamat Masjid'}</p>
-            <p className="text-xs">Telp. {profil?.nomor_kontak || '-'}</p>
+            <h1 className="text-base font-bold mb-0.5">{profil?.nama_masjid || 'Nama Masjid'}</h1>
+            <p className="text-[10px] mb-0">{profil?.alamat || 'Alamat Masjid'}</p>
+            <p className="text-[10px]">Telp. {profil?.nomor_kontak || '-'}</p>
           </div>
         </div>
 
         {/* Judul */}
-        <div className="text-center mb-6">
-          <h2 className="text-lg font-bold mb-1">DAFTAR PENERIMA GAJI DAN BIAYA PENGGANTI TRANSPORT PETUGAS IBADAH</h2>
-          <h3 className="text-base font-semibold">Bulan {months[bulan]} {tahun}</h3>
+        <div className="text-center mb-3">
+          <h2 className="text-sm font-bold mb-0.5">DAFTAR PENERIMA GAJI DAN BIAYA PENGGANTI TRANSPORT PETUGAS IBADAH</h2>
+          <h3 className="text-xs font-semibold">Bulan {months[bulan]} {tahun}</h3>
         </div>
 
         {/* Tabel */}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse border-2 border-black text-[9px]" style={{ tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: '24px' }} />
-              <col style={{ width: '110px' }} />
-              <col style={{ width: '52px' }} />
-              <col style={{ width: '52px' }} />
-              <col style={{ width: '58px' }} />
+              <col style={{ width: '16px' }} />
+              <col style={{ width: '80px' }} />
               <col style={{ width: '28px' }} />
-              <col style={{ width: '32px' }} />
-              <col style={{ width: '58px' }} />
-              <col style={{ width: '58px' }} />
-              <col style={{ width: '58px' }} />
-              <col style={{ width: '58px' }} />
-              <col style={{ width: '58px' }} />
+              <col style={{ width: '28px' }} />
+              <col style={{ width: '36px' }} />
+              <col style={{ width: '20px' }} />
+              <col style={{ width: '24px' }} />
+              <col style={{ width: '44px' }} />
+              <col style={{ width: '44px' }} />
+              <col style={{ width: '44px' }} />
+              <col style={{ width: '44px' }} />
+              <col style={{ width: '44px' }} />
             </colgroup>
             <thead>
               <tr className="bg-gray-100">
-                <th className="border-2 border-black p-1 text-center font-semibold whitespace-nowrap">NO</th>
-                <th className="border-2 border-black p-1 text-left font-semibold whitespace-nowrap">NAMA & PERAN</th>
-                <th className="border-2 border-black p-1 text-center font-semibold whitespace-nowrap">HADIR MUADZIN</th>
-                <th className="border-2 border-black p-1 text-center font-semibold whitespace-nowrap">HADIR IMAM</th>
-                <th className="border-2 border-black p-1 text-center font-semibold whitespace-nowrap">TANPA PENUGASAN</th>
-                <th className="border-2 border-black p-1 text-center font-semibold whitespace-nowrap">IZIN</th>
-                <th className="border-2 border-black p-1 text-center font-semibold whitespace-nowrap">ALPHA</th>
-                <th className="border-2 border-black p-1 text-right font-semibold whitespace-nowrap">TRANSPORT MUADZIN</th>
-                <th className="border-2 border-black p-1 text-right font-semibold whitespace-nowrap">TRANSPORT IMAM</th>
-                <th className="border-2 border-black p-1 text-right font-semibold whitespace-nowrap">TOTAL TRANSPORT</th>
-                <th className="border-2 border-black p-1 text-right font-semibold whitespace-nowrap">GAJI POKOK</th>
-                <th className="border-2 border-black p-1 text-right font-semibold whitespace-nowrap">TOTAL DITERIMA</th>
+                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">NO</th>
+                <th className="border-2 border-black p-0.5 text-left font-semibold whitespace-nowrap">NAMA & PERAN</th>
+                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">HDR MUADZIN</th>
+                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">HDR IMAM</th>
+                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">TANPA TUGAS</th>
+                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">IZIN</th>
+                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">ALPHA</th>
+                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">TRP MUADZIN</th>
+                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">TRP IMAM</th>
+                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">TOTAL TRP</th>
+                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">GAJI</th>
+                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">TOTAL</th>
               </tr>
             </thead>
             <tbody>
               {roster.map((item, index) => (
                 <tr key={index}>
-                  <td className="border-2 border-black p-1 text-center whitespace-nowrap">{index + 1}</td>
-                  <td className="border-2 border-black p-1 whitespace-nowrap truncate" title={item.nama}>{item.nama} / {item.role}</td>
-                  <td className="border-2 border-black p-1 text-center whitespace-nowrap">{item.hadir_muadzin}</td>
-                  <td className="border-2 border-black p-1 text-center whitespace-nowrap">{item.hadir_imam}</td>
-                  <td className="border-2 border-black p-1 text-center whitespace-nowrap">{item.hadir_tanpa_penugasan}</td>
-                  <td className="border-2 border-black p-1 text-center whitespace-nowrap">{item.izin}</td>
-                  <td className="border-2 border-black p-1 text-center whitespace-nowrap">{item.alpha}</td>
-                  <td className="border-2 border-black p-1 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transportMuadzin)}</td>
-                  <td className="border-2 border-black p-1 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transportImam)}</td>
-                  <td className="border-2 border-black p-1 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transport)}</td>
-                  <td className="border-2 border-black p-1 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.gaji)}</td>
-                  <td className="border-2 border-black p-1 text-right font-semibold tabular-nums whitespace-nowrap">{formatCurrency(item.total)}</td>
+                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{index + 1}</td>
+                  <td className="border-2 border-black p-0.5 whitespace-nowrap truncate" title={item.nama}>{item.nama} / {item.role}</td>
+                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.hadir_muadzin}</td>
+                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.hadir_imam}</td>
+                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.hadir_tanpa_penugasan}</td>
+                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.izin}</td>
+                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.alpha}</td>
+                  <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transportMuadzin)}</td>
+                  <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transportImam)}</td>
+                  <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transport)}</td>
+                  <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.gaji)}</td>
+                  <td className="border-2 border-black p-0.5 text-right font-semibold tabular-nums whitespace-nowrap">{formatCurrency(item.total)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr className="bg-gray-100 font-semibold">
-                <td colSpan="2" className="border-2 border-black p-1 text-center">TOTAL</td>
-                <td className="border-2 border-black p-1 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-1 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-1 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-1 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-1 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-1 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransportMuadzin)}</td>
-                <td className="border-2 border-black p-1 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransportImam)}</td>
-                <td className="border-2 border-black p-1 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransport)}</td>
-                <td className="border-2 border-black p-1 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalGaji)}</td>
-                <td className="border-2 border-black p-1 text-right tabular-nums whitespace-nowrap">{formatCurrency(grandTotal)}</td>
+                <td colSpan="2" className="border-2 border-black p-0.5 text-center">TOTAL</td>
+                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransportMuadzin)}</td>
+                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransportImam)}</td>
+                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransport)}</td>
+                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalGaji)}</td>
+                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(grandTotal)}</td>
               </tr>
             </tfoot>
           </table>
         </div>
 
         {/* Tanda Tangan */}
-        <div className="flex justify-between mt-16">
+        <div className="flex justify-between mt-6">
           <div className="w-5/12 pr-4">
-            <div className="flex flex-col gap-0.5 mb-10">
-              <p className="font-semibold text-xs">Mengetahui,</p>
-              <p className="font-semibold text-xs">Ketua Takmir</p>
+            <div className="flex flex-col gap-0 mb-6">
+              <p className="font-semibold text-[10px]">Mengetahui,</p>
+              <p className="font-semibold text-[10px]">Ketua Takmir</p>
             </div>
-            <div className="h-20 mb-1"></div>
-            <p className="font-semibold text-xs">{profil?.ketua_takmir || '(Nama Ketua Takmir)'}</p>
+            <div className="h-12 mb-1"></div>
+            <p className="font-semibold text-[10px]">{profil?.ketua_takmir || '(Nama Ketua Takmir)'}</p>
           </div>
           <div className="w-5/12 pl-4">
-            <div className="flex flex-col gap-0.5 mb-10">
-              <p className="font-semibold text-xs">Marisa, {formatDate(new Date())}</p>
-              <p className="font-semibold text-xs">Bendahara</p>
+            <div className="flex flex-col gap-0 mb-6">
+              <p className="font-semibold text-[10px]">Marisa, {formatDate(new Date())}</p>
+              <p className="font-semibold text-[10px]">Bendahara</p>
             </div>
-            <div className="h-20 mb-1"></div>
-            <p className="font-semibold text-xs">{profil?.bendahara || '(Nama Bendahara)'}</p>
+            <div className="h-12 mb-1"></div>
+            <p className="font-semibold text-[10px]">{profil?.bendahara || '(Nama Bendahara)'}</p>
           </div>
         </div>
       </div>
