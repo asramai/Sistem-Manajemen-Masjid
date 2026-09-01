@@ -8,9 +8,13 @@ const statusStyles = {
   alpha: 'bg-error/10 text-error border border-error/20',
 }
 
+const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+
 export default function RekapKehadiranSaya() {
   const { profile, session } = useAuth()
-  const [selectedMonth, setSelectedMonth] = useState('Oktober 2023')
+  const currentDate = new Date()
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth())
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
   const [history, setHistory] = useState([])
   const [stats, setStats] = useState({ hadir: 0, izin: 0 })
   const [petugas, setPetugas] = useState(null)
@@ -20,7 +24,7 @@ export default function RekapKehadiranSaya() {
     if (session?.user?.id) {
       fetchData()
     }
-  }, [session, selectedMonth])
+  }, [session, selectedMonth, selectedYear])
 
   const fetchData = async () => {
     if (!session?.user?.id) return
@@ -39,12 +43,9 @@ export default function RekapKehadiranSaya() {
       return
     }
 
-    const [month, year] = selectedMonth.split(' ')
-    const yearNum = parseInt(year)
-    const monthIndex = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].indexOf(month)
-    const startDate = `${yearNum}-${String(monthIndex + 1).padStart(2, '0')}-01`
-    const nextMonth = monthIndex + 2
-    const endDate = `${yearNum}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
+    const startDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
+    const nextMonth = selectedMonth + 2
+    const endDate = `${selectedYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
 
     const { data: presensiData } = await supabase
       .from('presensi')
@@ -95,27 +96,50 @@ export default function RekapKehadiranSaya() {
     }).format(value)
   }
 
+  const currentYear = new Date().getFullYear()
+  const years = useMemo(() => {
+    const startYear = currentYear - 2
+    const endYear = currentYear + 1
+    return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i)
+  }, [currentYear])
+
   return (
     <div className="ambient-bg flex-grow w-full max-w-container-max mx-auto px-4 py-lg md:py-8 grid grid-cols-1 md:grid-cols-12 gap-gutter">
       {/* Header Section */}
       <div className="col-span-1 md:col-span-12 mb-4">
-        <div className="flex justify-between items-end">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
             <h2 className="font-headline-lg text-headline-lg text-on-surface mb-2">Rekap Kehadiran Saya</h2>
             <p className="font-body-md text-on-surface-variant">Pantau aktivitas dan honorarium Anda bulan ini.</p>
           </div>
-          <div className="relative inline-block text-left">
-            <select
-              className="block w-full pl-4 pr-10 py-2 text-base border-outline-variant focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-lg glass-card text-on-surface font-label-md cursor-pointer appearance-none"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-            >
-              <option>Oktober 2023</option>
-              <option>September 2023</option>
-              <option>Agustus 2023</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
-              <span className="material-symbols-outlined text-xl">expand_more</span>
+          <div className="flex items-center gap-3">
+            <div className="relative inline-block text-left">
+              <select
+                className="block w-full pl-4 pr-10 py-2 text-base border-outline-variant focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-lg glass-card text-on-surface font-label-md cursor-pointer appearance-none"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              >
+                {MONTHS.map((month, index) => (
+                  <option key={month} value={index}>{month}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+                <span className="material-symbols-outlined text-xl">expand_more</span>
+              </div>
+            </div>
+            <div className="relative inline-block text-left">
+              <select
+                className="block w-full pl-4 pr-10 py-2 text-base border-outline-variant focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-lg glass-card text-on-surface font-label-md cursor-pointer appearance-none"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+                <span className="material-symbols-outlined text-xl">expand_more</span>
+              </div>
             </div>
           </div>
         </div>
