@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { downloadPDF, downloadExcel, downloadWord } from '../utils/download'
 
 const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 const roles = ['Semua', 'Imam', 'Muadzin', 'Bilal', 'Marbot']
@@ -140,6 +141,7 @@ export default function LaporanGaji() {
   const [loading, setLoading] = useState(true)
   const [biayaMap, setBiayaMap] = useState({})
   const [currentPetugasId, setCurrentPetugasId] = useState(null)
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false)
 
   useEffect(() => {
     fetchRoster()
@@ -332,6 +334,53 @@ export default function LaporanGaji() {
 
   const currentMonthLabel = `${months[selectedMonth]} ${selectedYear}`
 
+  const buildExportRows = (items) =>
+    items.map((item) => ({
+      Nama: item.nama,
+      Peran: item.role,
+      Hadir_Muadzin: item.hadir_muadzin,
+      Hadir_Imam: item.hadir_imam,
+      Hadir_Tanpa_Penugasan: item.hadir_tanpa_penugasan,
+      Izin: item.izin,
+      Alpha: item.alpha,
+      Transport_Muadzin: formatCurrency(item.transportMuadzin),
+      Transport_Imam: formatCurrency(item.transportImam),
+      Total_Transport: formatCurrency(item.transport),
+      Gaji_Pokok: formatCurrency(item.gaji),
+      Total_Diterima: formatCurrency(item.total),
+    }))
+
+  const handleDownload = async (type) => {
+    setShowDownloadMenu(false)
+    const rows = buildExportRows(filteredRoster)
+
+    if (type === 'pdf') {
+      navigate('/cetak-laporan')
+      setTimeout(() => {
+        downloadPDF('print-area', `laporan-gaji-${months[selectedMonth]}-${selectedYear}.pdf`)
+      }, 500)
+      return
+    }
+
+    if (type === 'pdf-detail') {
+      navigate('/cetak-detail')
+      setTimeout(() => {
+        downloadPDF('print-area', `laporan-gaji-detail-${months[selectedMonth]}-${selectedYear}.pdf`)
+      }, 500)
+      return
+    }
+
+    if (type === 'excel') {
+      downloadExcel(rows, `laporan-gaji-${months[selectedMonth]}-${selectedYear}.csv`)
+      return
+    }
+
+    if (type === 'word') {
+      downloadWord(rows, `laporan-gaji-${months[selectedMonth]}-${selectedYear}.doc`)
+      return
+    }
+  }
+
   return (
     <div className="max-w-container-max mx-auto px-margin-mobile md:px-6 pt-6 pb-12 space-y-stack-lg">
       {/* Page Header & Actions */}
@@ -362,21 +411,71 @@ export default function LaporanGaji() {
             </select>
           </div>
           {isAdmin && (
-            <div className="flex gap-2">
+            <div className="relative">
               <button
-                onClick={() => navigate(`/cetak-laporan?bulan=${selectedMonth}&tahun=${selectedYear}`)}
+                onClick={() => setShowDownloadMenu(!showDownloadMenu)}
                 className="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95"
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>picture_as_pdf</span>
-                Cetak PDF Laporan Gaji
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
+                Unduh Laporan
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>expand_more</span>
               </button>
-              <button
-                onClick={() => navigate(`/cetak-detail?bulan=${selectedMonth}&tahun=${selectedYear}`)}
-                className="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>table_view</span>
-                Cetak PDF Detail
-              </button>
+              {showDownloadMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg z-50 overflow-hidden">
+                  <button
+                    onClick={() => {
+                      setShowDownloadMenu(false)
+                      handleDownload('pdf')
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors text-left"
+                  >
+                    <span className="material-symbols-outlined text-primary">picture_as_pdf</span>
+                    <div>
+                      <p className="font-label-md text-label-md text-on-surface">PDF</p>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">Laporan ringkas</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDownloadMenu(false)
+                      handleDownload('pdf-detail')
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors text-left"
+                  >
+                    <span className="material-symbols-outlined text-primary">table_view</span>
+                    <div>
+                      <p className="font-label-md text-label-md text-on-surface">PDF Detail</p>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">Semua kolom rincian</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDownloadMenu(false)
+                      handleDownload('excel')
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors text-left"
+                  >
+                    <span className="material-symbols-outlined text-emerald-600">grid_on</span>
+                    <div>
+                      <p className="font-label-md text-label-md text-on-surface">Excel</p>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">File CSV</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDownloadMenu(false)
+                      handleDownload('word')
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors text-left"
+                  >
+                    <span className="material-symbols-outlined text-blue-600">description</span>
+                    <div>
+                      <p className="font-label-md text-label-md text-on-surface">Word</p>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">File DOC</p>
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
