@@ -55,8 +55,6 @@ export default function RekapKehadiranSaya() {
     const nextMonth = selectedMonth + 2
     const endDate = `${selectedYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2, '0')}-01`
 
-    console.log('Fetching presensi with:', { petugasId: petugasData.id, startDate, endDate })
-
     const { data: presensiData, error: presensiError } = await supabase
       .from('presensi')
       .select('*, jadwal:nama_sholat')
@@ -70,8 +68,6 @@ export default function RekapKehadiranSaya() {
       setLoading(false)
       return
     }
-
-    console.log('Presensi data:', presensiData)
 
     if (presensiData) {
       const hadir = presensiData.filter((p) => p.status === 'hadir').length

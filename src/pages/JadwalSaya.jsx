@@ -30,7 +30,7 @@ export default function JadwalSaya() {
       .from('petugas')
       .select('id')
       .eq('auth_user_id', session.user.id)
-      .single()
+      .maybeSingle()
 
     let petugasId = petugasData?.id
     setPetugasId(petugasId)
