@@ -600,7 +600,6 @@ export default function UserManagement() {
       const { error: profileError } = await supabase.from('profiles').insert({
         id: userId,
         nama: userForm.nama,
-        email: userForm.email,
         role: userForm.role,
         phone: userForm.phone || null,
       })
