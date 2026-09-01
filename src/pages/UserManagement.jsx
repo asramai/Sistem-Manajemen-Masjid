@@ -590,6 +590,13 @@ export default function UserManagement() {
       const { data, error } = await supabase.auth.signUp({
         email: userForm.email,
         password: userForm.password,
+        options: {
+          data: {
+            nama: userForm.nama,
+            role: userForm.role,
+            phone: userForm.phone || null,
+          },
+        },
       })
 
       if (error) throw error
@@ -597,14 +604,7 @@ export default function UserManagement() {
       const userId = data.user?.id
       if (!userId) throw new Error('Gagal membuat akun')
 
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: userId,
-        nama: userForm.nama,
-        role: userForm.role,
-        phone: userForm.phone || null,
-      })
-
-      if (profileError) throw profileError
+      await new Promise((resolve) => setTimeout(resolve, 500))
 
       alert('Akun berhasil dibuat!')
       setUserForm({ nama: '', email: '', password: '', role: 'admin', phone: '' })
