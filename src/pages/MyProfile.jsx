@@ -21,6 +21,7 @@ export default function MyProfile() {
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
+    avatar_url: '',
   })
   const [message, setMessage] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -33,6 +34,7 @@ export default function MyProfile() {
         nama: profile.nama || '',
         phone: profile.phone || '',
         alamat: profile.alamat || '',
+        avatar_url: profile.avatar_url || '',
       }))
     }
   }, [profile])
@@ -155,34 +157,45 @@ export default function MyProfile() {
       <div className="bg-surface-container-lowest border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] rounded-xl p-6 md:p-8">
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-32 h-32 rounded-full bg-surface-container-highest overflow-hidden shrink-0 border-2 border-primary/10">
-              {editing ? (
-                <>
-                  {form.avatar_url && <img alt="Avatar" className="w-full h-full object-cover" src={form.avatar_url} />}
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="absolute inset-0 bg-black/40 text-white flex items-center justify-center"
-                  >
-                    <span className="material-symbols-outlined text-[32px]">camera_alt</span>
-                  </button>
-                </>
+            <div className="relative w-32 h-32 rounded-full bg-surface-container-highest overflow-hidden shrink-0 border-2 border-primary/10">
+              {form.avatar_url || profile?.avatar_url ? (
+                <img
+                  alt={profile?.nama || 'Avatar'}
+                  className="w-full h-full object-cover"
+                  src={form.avatar_url || profile?.avatar_url}
+                />
               ) : (
-                profile?.avatar_url ? (
-                  <img alt={profile.nama} className="w-full h-full object-cover" src={profile.avatar_url} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-secondary font-h3 text-2xl">
-                    {profile?.nama?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
-                  </div>
-                )
+                <div className="w-full h-full flex items-center justify-center text-secondary font-h3 text-2xl">
+                  {profile?.nama?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
+                </div>
               )}
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+              {editing && (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="absolute inset-0 bg-black/40 text-white flex items-center justify-center hover:bg-black/50 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[32px]">camera_alt</span>
+                </button>
+              )}
             </div>
             {editing && (
-              <button type="button" onClick={() => fileRef.current?.click()} className="text-primary font-label-md text-label-md">
-                {uploading ? 'Mengupload...' : 'Ganti Foto'}
-              </button>
+              <div className="flex flex-col items-center gap-2">
+                <button type="button" onClick={() => fileRef.current?.click()} className="text-primary font-label-md text-label-md">
+                  {uploading ? 'Mengupload...' : 'Ganti Foto'}
+                </button>
+                {(form.avatar_url || profile?.avatar_url) && (
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, avatar_url: '' }))}
+                    className="text-error font-label-md text-label-md"
+                  >
+                    Hapus Foto
+                  </button>
+                )}
+              </div>
             )}
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
 
           <div className="flex-1 space-y-4">
