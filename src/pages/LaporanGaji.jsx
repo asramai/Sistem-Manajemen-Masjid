@@ -357,7 +357,7 @@ export default function LaporanGaji() {
     if (type === 'pdf') {
       navigate(`/cetak-laporan?bulan=${selectedMonth}&tahun=${selectedYear}`)
       setTimeout(() => {
-        downloadPDF('print-area', `laporan-gaji-${months[selectedMonth]}-${selectedYear}.pdf`)
+        downloadPDF('print-area', `laporan-gaji-${months[selectedMonth]}-${selectedYear}.pdf`, 'portrait')
       }, 500)
       return
     }
@@ -365,7 +365,7 @@ export default function LaporanGaji() {
     if (type === 'pdf-detail') {
       navigate(`/cetak-detail?bulan=${selectedMonth}&tahun=${selectedYear}`)
       setTimeout(() => {
-        downloadPDF('print-area', `laporan-gaji-detail-${months[selectedMonth]}-${selectedYear}.pdf`)
+        downloadPDF('print-area', `laporan-gaji-detail-${months[selectedMonth]}-${selectedYear}.pdf`, 'landscape')
       }, 500)
       return
     }

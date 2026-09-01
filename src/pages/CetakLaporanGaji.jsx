@@ -195,7 +195,7 @@ export default function CetakLaporanGaji() {
 
       <div id="print-area" className="max-w-3xl mx-auto p-6 print:p-0 print:max-w-none">
         {/* Kop Surat */}
-        <div className="flex items-center gap-4 mb-4 border-b-2 border-black pb-4">
+        <div className="flex items-center gap-4 mb-4 border-b border-black pb-4">
           {profil?.logo_url && (
             <img src={profil.logo_url} alt="Logo Masjid" className="w-16 h-16 object-contain shrink-0" />
           )}
@@ -213,38 +213,38 @@ export default function CetakLaporanGaji() {
         </div>
 
         {/* Tabel */}
-        <table className="w-full border-collapse border-2 border-black text-[10px]">
+        <table className="w-full border-collapse border border-black text-[10px]">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border-2 border-black p-1 text-center font-semibold w-8">NO</th>
-              <th className="border-2 border-black p-1 text-center font-semibold">NAMA PETUGAS</th>
-              <th className="border-2 border-black p-1 text-center font-semibold">TUGAS</th>
-              <th className="border-2 border-black p-1 text-right font-semibold">GAJI POKOK</th>
-              <th className="border-2 border-black p-1 text-right font-semibold">TRANSPORT</th>
-              <th className="border-2 border-black p-1 text-right font-semibold">JUMLAH</th>
-              <th className="border-2 border-black p-1 text-center font-semibold">TANDA TANGAN</th>
+              <th className="border border-black p-1 text-center font-semibold w-8">NO</th>
+              <th className="border border-black p-1 text-center font-semibold">NAMA PETUGAS</th>
+              <th className="border border-black p-1 text-center font-semibold">TUGAS</th>
+              <th className="border border-black p-1 text-right font-semibold">GAJI POKOK</th>
+              <th className="border border-black p-1 text-right font-semibold">TRANSPORT</th>
+              <th className="border border-black p-1 text-right font-semibold">JUMLAH</th>
+              <th className="border border-black p-1 text-center font-semibold">TANDA TANGAN</th>
             </tr>
           </thead>
           <tbody>
             {roster.map((item, index) => (
               <tr key={index}>
-                <td className="border-2 border-black p-1 text-center">{index + 1}</td>
-                <td className="border-2 border-black p-1">{item.nama}</td>
-                <td className="border-2 border-black p-1 text-center capitalize">{item.role}</td>
-                <td className="border-2 border-black p-1 text-right tabular-nums">{formatCurrency(item.gaji)}</td>
-                <td className="border-2 border-black p-1 text-right tabular-nums">{formatCurrency(item.transport)}</td>
-                <td className="border-2 border-black p-1 text-right font-semibold tabular-nums">{formatCurrency(item.total)}</td>
-                <td className="border-2 border-black p-1 h-16"></td>
+                <td className="border border-black p-1 text-center">{index + 1}</td>
+                <td className="border border-black p-1">{item.nama}</td>
+                <td className="border border-black p-1 text-center capitalize">{item.role}</td>
+                <td className="border border-black p-1 text-right tabular-nums">{formatCurrency(item.gaji)}</td>
+                <td className="border border-black p-1 text-right tabular-nums">{formatCurrency(item.transport)}</td>
+                <td className="border border-black p-1 text-right font-semibold tabular-nums">{formatCurrency(item.total)}</td>
+                <td className="border border-black p-1 h-16"></td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="bg-gray-100 font-semibold">
-              <td colSpan="3" className="border-2 border-black p-1 text-center">TOTAL</td>
-              <td className="border-2 border-black p-1 text-right tabular-nums">{formatCurrency(totalGaji)}</td>
-              <td className="border-2 border-black p-1 text-right tabular-nums">{formatCurrency(totalTransport)}</td>
-              <td className="border-2 border-black p-1 text-right tabular-nums">{formatCurrency(grandTotal)}</td>
-              <td className="border-2 border-black p-1"></td>
+              <td colSpan="3" className="border border-black p-1 text-center">TOTAL</td>
+              <td className="border border-black p-1 text-right tabular-nums">{formatCurrency(totalGaji)}</td>
+              <td className="border border-black p-1 text-right tabular-nums">{formatCurrency(totalTransport)}</td>
+              <td className="border border-black p-1 text-right tabular-nums">{formatCurrency(grandTotal)}</td>
+              <td className="border border-black p-1"></td>
             </tr>
           </tfoot>
         </table>

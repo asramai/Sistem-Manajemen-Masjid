@@ -204,7 +204,7 @@ export default function CetakDetailLaporanGaji() {
 
       <div id="print-area" className="max-w-3xl mx-auto p-6 print:p-0 print:max-w-none">
         {/* Kop Surat */}
-        <div className="flex items-center gap-4 mb-3 border-b-2 border-black pb-3">
+        <div className="flex items-center gap-4 mb-3 border-b border-black pb-3">
           {profil?.logo_url && (
             <img src={profil.logo_url} alt="Logo Masjid" className="w-14 h-14 object-contain shrink-0" />
           )}
@@ -223,7 +223,7 @@ export default function CetakDetailLaporanGaji() {
 
         {/* Tabel */}
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border-2 border-black text-[9px]" style={{ tableLayout: 'fixed' }}>
+          <table className="w-full border-collapse border border-black text-[9px]" style={{ tableLayout: 'fixed' }}>
             <colgroup>
               <col style={{ width: '16px' }} />
               <col style={{ width: '80px' }} />
@@ -240,51 +240,51 @@ export default function CetakDetailLaporanGaji() {
             </colgroup>
             <thead>
               <tr className="bg-gray-100">
-                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">NO</th>
-                <th className="border-2 border-black p-0.5 text-left font-semibold whitespace-nowrap">NAMA & PERAN</th>
-                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">HDR MUADZIN</th>
-                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">HDR IMAM</th>
-                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">TANPA TUGAS</th>
-                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">IZIN</th>
-                <th className="border-2 border-black p-0.5 text-center font-semibold whitespace-nowrap">ALPHA</th>
-                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">TRP MUADZIN</th>
-                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">TRP IMAM</th>
-                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">TOTAL TRP</th>
-                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">GAJI</th>
-                <th className="border-2 border-black p-0.5 text-right font-semibold whitespace-nowrap">TOTAL</th>
+                <th className="border border-black p-0.5 text-center font-semibold whitespace-nowrap">NO</th>
+                <th className="border border-black p-0.5 text-left font-semibold whitespace-nowrap">NAMA & PERAN</th>
+                <th className="border border-black p-0.5 text-center font-semibold whitespace-nowrap">HDR MUADZIN</th>
+                <th className="border border-black p-0.5 text-center font-semibold whitespace-nowrap">HDR IMAM</th>
+                <th className="border border-black p-0.5 text-center font-semibold whitespace-nowrap">TANPA TUGAS</th>
+                <th className="border border-black p-0.5 text-center font-semibold whitespace-nowrap">IZIN</th>
+                <th className="border border-black p-0.5 text-center font-semibold whitespace-nowrap">ALPHA</th>
+                <th className="border border-black p-0.5 text-right font-semibold whitespace-nowrap">TRP MUADZIN</th>
+                <th className="border border-black p-0.5 text-right font-semibold whitespace-nowrap">TRP IMAM</th>
+                <th className="border border-black p-0.5 text-right font-semibold whitespace-nowrap">TOTAL TRP</th>
+                <th className="border border-black p-0.5 text-right font-semibold whitespace-nowrap">GAJI</th>
+                <th className="border border-black p-0.5 text-right font-semibold whitespace-nowrap">TOTAL</th>
               </tr>
             </thead>
             <tbody>
               {roster.map((item, index) => (
                 <tr key={index}>
-                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{index + 1}</td>
-                  <td className="border-2 border-black p-0.5 whitespace-nowrap truncate" title={item.nama}>{item.nama} / {item.role}</td>
-                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.hadir_muadzin}</td>
-                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.hadir_imam}</td>
-                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.hadir_tanpa_penugasan}</td>
-                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.izin}</td>
-                  <td className="border-2 border-black p-0.5 text-center whitespace-nowrap">{item.alpha}</td>
-                  <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transportMuadzin)}</td>
-                  <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transportImam)}</td>
-                  <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transport)}</td>
-                  <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.gaji)}</td>
-                  <td className="border-2 border-black p-0.5 text-right font-semibold tabular-nums whitespace-nowrap">{formatCurrency(item.total)}</td>
+                  <td className="border border-black p-0.5 text-center whitespace-nowrap">{index + 1}</td>
+                  <td className="border border-black p-0.5 whitespace-nowrap truncate" title={item.nama}>{item.nama} / {item.role}</td>
+                  <td className="border border-black p-0.5 text-center whitespace-nowrap">{item.hadir_muadzin}</td>
+                  <td className="border border-black p-0.5 text-center whitespace-nowrap">{item.hadir_imam}</td>
+                  <td className="border border-black p-0.5 text-center whitespace-nowrap">{item.hadir_tanpa_penugasan}</td>
+                  <td className="border border-black p-0.5 text-center whitespace-nowrap">{item.izin}</td>
+                  <td className="border border-black p-0.5 text-center whitespace-nowrap">{item.alpha}</td>
+                  <td className="border border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transportMuadzin)}</td>
+                  <td className="border border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transportImam)}</td>
+                  <td className="border border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.transport)}</td>
+                  <td className="border border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(item.gaji)}</td>
+                  <td className="border border-black p-0.5 text-right font-semibold tabular-nums whitespace-nowrap">{formatCurrency(item.total)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr className="bg-gray-100 font-semibold">
-                <td colSpan="2" className="border-2 border-black p-0.5 text-center">TOTAL</td>
-                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-0.5 text-center whitespace-nowrap"></td>
-                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransportMuadzin)}</td>
-                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransportImam)}</td>
-                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransport)}</td>
-                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalGaji)}</td>
-                <td className="border-2 border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(grandTotal)}</td>
+                <td colSpan="2" className="border border-black p-0.5 text-center">TOTAL</td>
+                <td className="border border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border border-black p-0.5 text-center whitespace-nowrap"></td>
+                <td className="border border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransportMuadzin)}</td>
+                <td className="border border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransportImam)}</td>
+                <td className="border border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalTransport)}</td>
+                <td className="border border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(totalGaji)}</td>
+                <td className="border border-black p-0.5 text-right tabular-nums whitespace-nowrap">{formatCurrency(grandTotal)}</td>
               </tr>
             </tfoot>
           </table>

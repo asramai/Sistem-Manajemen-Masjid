@@ -1,4 +1,4 @@
-export async function downloadPDF(elementId, filename = 'laporan.pdf') {
+export async function downloadPDF(elementId, filename = 'laporan.pdf', orientation = 'portrait') {
   const element = document.getElementById(elementId)
   if (!element) {
     alert('Elemen laporan tidak ditemukan')
@@ -12,7 +12,7 @@ export async function downloadPDF(elementId, filename = 'laporan.pdf') {
     filename: filename,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: orientation },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
   }
 
