@@ -37,6 +37,12 @@ export default function KonfirmasiIzin() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [actionNotes, setActionNotes] = useState({})
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState({
+    nama_sholat: '',
+    alasan: '',
+    tanggal: '',
+  })
 
   const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin'
 
@@ -78,7 +84,14 @@ export default function KonfirmasiIzin() {
     setLoading(true)
     let query = supabase
       .from('konfirmasi_izin')
-      .select('*')
+      .select(`
+        *,
+        petugas:petugas_id (
+          id,
+          nama,
+          role
+        )
+      `)
       .order('tanggal', { ascending: false })
 
     if (activeTab === 'pengajuan' && !isAdmin && petugasId) {
@@ -209,6 +222,44 @@ export default function KonfirmasiIzin() {
       alert('Gagal mengembalikan: ' + error.message)
     } else {
       setActionNotes((prev) => ({ ...prev, [izin.id]: '' }))
+      fetchIzin()
+    }
+  }
+
+  const handleEdit = (izin) => {
+    setEditingId(izin.id)
+    setEditForm({
+      nama_sholat: izin.nama_sholat,
+      alasan: izin.alasan,
+      tanggal: izin.tanggal,
+    })
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditForm({
+      nama_sholat: '',
+      alasan: '',
+      tanggal: '',
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingId) return
+    const { error } = await supabase
+      .from('konfirmasi_izin')
+      .update({
+        nama_sholat: editForm.nama_sholat,
+        alasan: editForm.alasan,
+        tanggal: editForm.tanggal,
+      })
+      .eq('id', editingId)
+
+    if (error) {
+      alert('Gagal menyimpan perubahan: ' + error.message)
+    } else {
+      alert('Perubahan berhasil disimpan')
+      handleCancelEdit()
       fetchIzin()
     }
   }
@@ -451,6 +502,11 @@ export default function KonfirmasiIzin() {
                             Lihat Bukti
                           </a>
                         )}
+                        {isAdmin && izin.petugas && (
+                          <p className="text-xs text-on-surface-variant mt-1">
+                            <span className="font-semibold">Pengaju:</span> {izin.petugas.nama} <span className="text-[10px] uppercase font-semibold text-primary">({izin.petugas.role})</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${statusStyles[izin.status] || statusStyles['pending']}`}>
@@ -466,33 +522,85 @@ export default function KonfirmasiIzin() {
                   )}
                   {(activeTab === 'validasi' || activeTab === 'riwayat') && isAdmin && izin.status === 'pending' && (
                     <div className="mt-3 ml-16 space-y-2">
-                      <input
-                        type="text"
-                        placeholder="Tambahkan catatan..."
-                        value={actionNotes[izin.id] || ''}
-                        onChange={(e) => setActionNotes((prev) => ({ ...prev, [izin.id]: e.target.value }))}
-                        className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-sm text-body-sm"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(izin)}
-                          className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
-                        >
-                          Setujui
-                        </button>
-                        <button
-                          onClick={() => handleReturn(izin)}
-                          className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-semibold hover:bg-orange-700 transition-colors"
-                        >
-                          Kembalikan
-                        </button>
-                        <button
-                          onClick={() => handleReject(izin)}
-                          className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors"
-                        >
-                          Tolak
-                        </button>
-                      </div>
+                      {editingId === izin.id ? (
+                        <>
+                          <div className="grid grid-cols-1 gap-2">
+                            <input
+                              type="date"
+                              value={editForm.tanggal}
+                              onChange={(e) => setEditForm((prev) => ({ ...prev, tanggal: e.target.value }))}
+                              className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-sm text-body-sm"
+                            />
+                            <select
+                              value={editForm.nama_sholat}
+                              onChange={(e) => setEditForm((prev) => ({ ...prev, nama_sholat: e.target.value }))}
+                              className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-sm text-body-sm"
+                            >
+                              {['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].map((sholat) => (
+                                <option key={sholat} value={sholat}>{sholat}</option>
+                              ))}
+                            </select>
+                            <textarea
+                              value={editForm.alasan}
+                              onChange={(e) => setEditForm((prev) => ({ ...prev, alasan: e.target.value }))}
+                              rows="2"
+                              className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-sm text-body-sm"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleSaveEdit}
+                              className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                            >
+                              Simpan
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="px-3 py-1.5 rounded-lg bg-gray-500 text-white text-xs font-semibold hover:bg-gray-600 transition-colors"
+                            >
+                              Batal
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input
+                            type="text"
+                            placeholder="Tambahkan catatan..."
+                            value={actionNotes[izin.id] || ''}
+                            onChange={(e) => setActionNotes((prev) => ({ ...prev, [izin.id]: e.target.value }))}
+                            className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-sm text-body-sm"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleApprove(izin)}
+                              className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                            >
+                              Setujui
+                            </button>
+                            <button
+                              onClick={() => handleReturn(izin)}
+                              className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-semibold hover:bg-orange-700 transition-colors"
+                            >
+                              Kembalikan
+                            </button>
+                            <button
+                              onClick={() => handleReject(izin)}
+                              className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors"
+                            >
+                              Tolak
+                            </button>
+                            {activeTab === 'riwayat' && (
+                              <button
+                                onClick={() => handleEdit(izin)}
+                                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
+                              >
+                                Edit
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
