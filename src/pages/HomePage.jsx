@@ -191,6 +191,7 @@ export default function HomePage() {
   }, [todayPresensi, izinList, petugasList.length, todayJadwal.length])
 
   const getPetugasName = (id) => {
+    if (!id) return '-'
     const p = petugasList.find((pet) => pet.id === id)
     return p ? p.nama : '-'
   }
@@ -224,7 +225,7 @@ export default function HomePage() {
       return { label: getPetugasName(cadanganHadir.petugas_id), icon: 'check_circle', pengganti: null, color: 'text-green-600' }
     }
     if (penggantiRecord) {
-      return { label: getPetugasName(penggantiRecord.petugas_id), icon: null, pengganti: null, color: 'text-orange-600' }
+      return { label: getPetugasName(utamaId), icon: null, pengganti: getPetugasName(penggantiRecord.petugas_id), color: 'text-orange-600' }
     }
     return { label: getPetugasName(utamaId), icon: null, pengganti: null, color: 'text-on-surface' }
   }
@@ -304,10 +305,10 @@ export default function HomePage() {
                         <div>
                           <p className="font-body-md font-semibold text-on-surface">{jadwal.nama_sholat}</p>
                           <p className="font-body-sm text-body-sm text-on-surface-variant">
-                            Imam: {imamStatus.label} {imamStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{imamStatus.icon}</span>} {imamStatus.pengganti && <span className="text-orange-600">({imamStatus.pengganti})</span>}
+                            Imam: {imamStatus.label} {imamStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{imamStatus.icon}</span>} {imamStatus.pengganti && <span className={`ml-1 ${imamStatus.color}`}>({imamStatus.pengganti})</span>}
                           </p>
                           <p className="font-body-sm text-body-sm text-on-surface-variant">
-                            Muadzin: {muadzinStatus.label} {muadzinStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{muadzinStatus.icon}</span>} {muadzinStatus.pengganti && <span className="text-orange-600">({muadzinStatus.pengganti})</span>}
+                            Muadzin: {muadzinStatus.label} {muadzinStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{muadzinStatus.icon}</span>} {muadzinStatus.pengganti && <span className={`ml-1 ${muadzinStatus.color}`}>({muadzinStatus.pengganti})</span>}
                           </p>
                         </div>
                         <span className="px-3 py-1 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
