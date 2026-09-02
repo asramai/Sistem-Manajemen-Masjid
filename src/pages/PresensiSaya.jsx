@@ -8,6 +8,7 @@ export default function PresensiSaya() {
   const { profile, session } = useAuth()
   const [petugas, setPetugas] = useState(null)
   const [jadwalHariIni, setJadwalHariIni] = useState([])
+  const [jadwalMap, setJadwalMap] = useState({})
   const [presensiList, setPresensiList] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -43,12 +44,22 @@ export default function PresensiSaya() {
       setPetugas(petugasData)
     }
 
-    const { data: jadwalData } = await supabase
+    const { data: jadwalBulananData } = await supabase
       .from('jadwal_bulanan')
       .select('*')
       .eq('tanggal', today)
 
-    const filteredJadwal = (jadwalData || []).filter((j) => prayers.includes(j.nama_sholat))
+    const { data: jadwalData } = await supabase
+      .from('jadwal')
+      .select('*')
+
+    const jadwalMapLocal = {}
+    (jadwalData || []).forEach((j) => {
+      jadwalMapLocal[j.nama_sholat] = j
+    })
+    setJadwalMap(jadwalMapLocal)
+
+    const filteredJadwal = (jadwalBulananData || []).filter((j) => prayers.includes(j.nama_sholat))
     setJadwalHariIni(filteredJadwal)
 
     if (petugasData || profile?.nama) {
@@ -103,7 +114,9 @@ export default function PresensiSaya() {
   const alreadyPresensi = (jadwal) => {
     const myRole = getMyRole(jadwal)
     if (!myRole) return false
-    return presensiList.some((p) => p.jadwal_id === jadwal.id && p.petugas_id === petugas.id && p.status === 'hadir')
+    const jadwalId = jadwalMap[jadwal.nama_sholat]?.id
+    if (!jadwalId) return false
+    return presensiList.some((p) => p.jadwal_id === jadwalId && p.petugas_id === petugas.id && (p.status === 'hadir' || p.status === 'pending'))
   }
 
   const handlePresensi = async (jadwal) => {
@@ -127,9 +140,16 @@ export default function PresensiSaya() {
     setMessage('')
 
     try {
+      const jadwalId = jadwalMap[jadwal.nama_sholat]?.id
+      if (!jadwalId) {
+        alert('Data jadwal tidak ditemukan. Hubungi admin.')
+        setSaving(false)
+        return
+      }
+
       const { error } = await supabase.from('presensi').insert({
         petugas_id: petugas.id,
-        jadwal_id: jadwal.id,
+        jadwal_id: jadwalId,
         tanggal: today,
         status: 'pending',
         peran: myRole,
@@ -191,6 +211,8 @@ export default function PresensiSaya() {
             const assigned = isAssigned(jadwal)
             const done = alreadyPresensi(jadwal)
             const myRole = getMyRole(jadwal)
+            const jadwalId = jadwalMap[jadwal.nama_sholat]?.id
+            const hasPending = jadwalId ? presensiList.some((p) => p.jadwal_id === jadwalId && p.petugas_id === petugas.id && p.status === 'pending') : false
 
             return (
               <div
@@ -217,7 +239,7 @@ export default function PresensiSaya() {
                         Sudah presensi
                       </p>
                     )}
-                    {!done && presensiList.some((p) => p.jadwal_id === jadwal.id && p.petugas_id === petugas.id && p.status === 'pending') && (
+                    {!done && hasPending && (
                       <p className="font-body-sm text-body-sm text-amber-600 mt-1 flex items-center gap-1">
                         <span className="material-symbols-outlined text-sm">hourglass_top</span>
                         Menunggu validasi admin
