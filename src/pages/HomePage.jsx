@@ -148,15 +148,11 @@ export default function HomePage() {
   }
 
   const todayJadwal = useMemo(() => {
-    const filtered = jadwalBulanan.filter((j) => prayers.includes(j.nama_sholat))
-    console.log('Today jadwal:', filtered)
-    return filtered
+    return jadwalBulanan.filter((j) => prayers.includes(j.nama_sholat))
   }, [jadwalBulanan])
 
   const todayPresensi = useMemo(() => {
-    const filtered = presensiList.filter((pr) => pr.tanggal === today)
-    console.log('Today presensi:', filtered)
-    return filtered
+    return presensiList.filter((pr) => pr.tanggal === today)
   }, [presensiList])
 
   const myPresensi = useMemo(() => {
@@ -213,14 +209,13 @@ export default function HomePage() {
     const penggantiRecord = presensiJadwal.find((pr) => pr.petugas_id !== utamaId && pr.petugas_id !== cadanganId && pr.status === 'hadir')
 
     if (utamaHadir) {
-      return { label: getPetugasName(utamaId), icon: 'check_circle', pengganti: null, color: 'text-green-600' }
+      return { label: getPetugasName(utamaHadir.petugas_id), icon: 'check_circle', pengganti: null, color: 'text-green-600' }
     }
     if (cadanganHadir) {
-      return { label: getPetugasName(cadanganId), icon: 'check_circle', pengganti: null, color: 'text-green-600' }
+      return { label: getPetugasName(cadanganHadir.petugas_id), icon: 'check_circle', pengganti: null, color: 'text-green-600' }
     }
     if (penggantiRecord) {
-      console.log('Pengganti found:', penggantiRecord)
-      return { label: getPetugasName(penggantiRecord.petugas_id), icon: null, pengganti: getPetugasName(penggantiRecord.petugas_pengganti_id), color: 'text-orange-600' }
+      return { label: getPetugasName(penggantiRecord.petugas_id), icon: null, pengganti: null, color: 'text-orange-600' }
     }
     return { label: getPetugasName(utamaId), icon: null, pengganti: null, color: 'text-on-surface' }
   }
