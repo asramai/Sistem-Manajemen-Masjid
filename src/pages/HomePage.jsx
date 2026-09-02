@@ -148,11 +148,15 @@ export default function HomePage() {
   }
 
   const todayJadwal = useMemo(() => {
-    return jadwalBulanan.filter((j) => prayers.includes(j.nama_sholat))
+    const filtered = jadwalBulanan.filter((j) => prayers.includes(j.nama_sholat))
+    console.log('Today jadwal:', filtered)
+    return filtered
   }, [jadwalBulanan])
 
   const todayPresensi = useMemo(() => {
-    return presensiList.filter((pr) => pr.tanggal === today)
+    const filtered = presensiList.filter((pr) => pr.tanggal === today)
+    console.log('Today presensi:', filtered)
+    return filtered
   }, [presensiList])
 
   const myPresensi = useMemo(() => {
@@ -206,7 +210,7 @@ export default function HomePage() {
 
     const utamaHadir = presensiJadwal.find((pr) => pr.petugas_id === utamaId && pr.status === 'hadir')
     const cadanganHadir = presensiJadwal.find((pr) => pr.petugas_id === cadanganId && pr.status === 'hadir')
-    const pengganti = presensiJadwal.find((pr) => pr.petugas_pengganti_id === utamaId && pr.status === 'hadir')
+    const penggantiRecord = presensiJadwal.find((pr) => pr.petugas_id !== utamaId && pr.petugas_id !== cadanganId && pr.status === 'hadir')
 
     if (utamaHadir) {
       return { label: getPetugasName(utamaId), icon: 'check_circle', pengganti: null, color: 'text-green-600' }
@@ -214,8 +218,9 @@ export default function HomePage() {
     if (cadanganHadir) {
       return { label: getPetugasName(cadanganId), icon: 'check_circle', pengganti: null, color: 'text-green-600' }
     }
-    if (pengganti) {
-      return { label: getPetugasName(pengganti.petugas_id), icon: null, pengganti: null, color: 'text-orange-600' }
+    if (penggantiRecord) {
+      console.log('Pengganti found:', penggantiRecord)
+      return { label: getPetugasName(penggantiRecord.petugas_id), icon: null, pengganti: getPetugasName(penggantiRecord.petugas_pengganti_id), color: 'text-orange-600' }
     }
     return { label: getPetugasName(utamaId), icon: null, pengganti: null, color: 'text-on-surface' }
   }
@@ -295,10 +300,10 @@ export default function HomePage() {
                         <div>
                           <p className="font-body-md font-semibold text-on-surface">{jadwal.nama_sholat}</p>
                           <p className="font-body-sm text-body-sm text-on-surface-variant">
-                            Imam: {imamStatus.label} {imamStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{imamStatus.icon}</span>}
+                            Imam: {imamStatus.label} {imamStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{imamStatus.icon}</span>} {imamStatus.pengganti && <span className="text-orange-600">({imamStatus.pengganti})</span>}
                           </p>
                           <p className="font-body-sm text-body-sm text-on-surface-variant">
-                            Muadzin: {muadzinStatus.label} {muadzinStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{muadzinStatus.icon}</span>}
+                            Muadzin: {muadzinStatus.label} {muadzinStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{muadzinStatus.icon}</span>} {muadzinStatus.pengganti && <span className="text-orange-600">({muadzinStatus.pengganti})</span>}
                           </p>
                         </div>
                         <span className="px-3 py-1 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
