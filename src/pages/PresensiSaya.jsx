@@ -131,7 +131,7 @@ export default function PresensiSaya() {
         petugas_id: petugas.id,
         jadwal_id: jadwal.id,
         tanggal: today,
-        status: 'hadir',
+        status: 'pending',
         peran: myRole,
       })
 
@@ -215,6 +215,12 @@ export default function PresensiSaya() {
                       <p className="font-body-sm text-body-sm text-green-600 mt-1 flex items-center gap-1">
                         <span className="material-symbols-outlined text-sm">check_circle</span>
                         Sudah presensi
+                      </p>
+                    )}
+                    {!done && presensiList.some((p) => p.jadwal_id === jadwal.id && p.petugas_id === petugas.id && p.status === 'pending') && (
+                      <p className="font-body-sm text-body-sm text-amber-600 mt-1 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">hourglass_top</span>
+                        Menunggu validasi admin
                       </p>
                     )}
                   </div>

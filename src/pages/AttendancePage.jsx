@@ -39,6 +39,7 @@ export default function AttendancePage() {
   })
   const [savedPresensi, setSavedPresensi] = useState([])
   const [presensiWarning, setPresensiWarning] = useState('')
+  const [pendingPresensi, setPendingPresensi] = useState([])
 
   const imamList = useMemo(() => petugas.filter((p) => p.role === 'imam'), [petugas])
   const muadzinList = useMemo(() => petugas.filter((p) => p.role === 'muadzin'), [petugas])
@@ -53,6 +54,7 @@ export default function AttendancePage() {
     if (jadwalItem) {
       fetchAssignment()
       fetchSavedPresensi()
+      fetchPendingPresensi()
     }
   }, [selectedDate, selectedPrayer, jadwalItem, petugas])
 
@@ -64,6 +66,7 @@ export default function AttendancePage() {
       .select('*')
       .eq('jadwal_id', jadwalItem.id)
       .eq('tanggal', selectedDate)
+      .neq('status', 'pending')
       .order('created_at', { ascending: true })
 
     if (error) {
@@ -135,6 +138,93 @@ export default function AttendancePage() {
     }
 
     setSavedPresensi(enriched)
+  }
+
+  const fetchPendingPresensi = async () => {
+    if (!jadwalItem) return
+
+    const { data, error } = await supabase
+      .from('presensi')
+      .select('*')
+      .eq('jadwal_id', jadwalItem.id)
+      .eq('tanggal', selectedDate)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching pending presensi:', error)
+      return
+    }
+
+    const enriched = await Promise.all(
+      (data || []).map(async (record) => {
+        const pengganti = petugas.find((p) => p.id === record.petugas_id)
+        let nama = pengganti?.nama || '-'
+        let role = '-'
+        if (pengganti) {
+          role = pengganti.role === 'imam' ? 'Imam' : pengganti.role === 'muadzin' ? 'Muadzin' : 'Petugas'
+        }
+
+        const presensiDate = new Date(record.created_at)
+        const presensiTime = presensiDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
+        return {
+          ...record,
+          nama,
+          role,
+          presensiTime,
+        }
+      })
+    )
+
+    setPendingPresensi(enriched)
+  }
+
+  const handleApprove = async (record) => {
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('presensi')
+        .update({ status: 'hadir' })
+        .eq('id', record.id)
+
+      if (error) {
+        alert('Gagal menyetujui presensi: ' + error.message)
+        return
+      }
+
+      alert(`Presensi ${record.nama} berhasil disetujui!`)
+      fetchSavedPresensi()
+      fetchPendingPresensi()
+    } catch (err) {
+      alert('Terjadi kesalahan saat menyetujui presensi')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleReject = async (record) => {
+    if (!confirm('Yakin ingin menolak presensi ini? Data akan dihapus.')) return
+
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('presensi')
+        .delete()
+        .eq('id', record.id)
+
+      if (error) {
+        alert('Gagal menolak presensi: ' + error.message)
+        return
+      }
+
+      alert(`Presensi ${record.nama} berhasil ditolak dan dihapus.`)
+      fetchPendingPresensi()
+    } catch (err) {
+      alert('Terjadi kesalahan saat menolak presensi')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const fetchData = async () => {
@@ -439,6 +529,62 @@ export default function AttendancePage() {
           </button>
         </div>
       </div>
+
+      {pendingPresensi.length > 0 && (
+        <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+          <div className="p-4 md:p-6 border-b border-outline-variant bg-surface-bright">
+            <h3 className="font-h3 text-h3 text-on-surface">Menunggu Validasi</h3>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Presensi mandiri dari petugas yang perlu disetujui.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="inline-block min-w-full align-middle">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-bright border-b border-outline-variant">
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tanggal</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Shalat</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Petugas</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Peran</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Waktu Presensi</th>
+                    <th className="p-3 md:p-4 font-semibold font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
+                  {pendingPresensi.map((record) => (
+                    <tr key={record.id}>
+                      <td className="p-3 md:p-4 whitespace-nowrap">{formatDate(new Date(record.tanggal))}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap">{selectedPrayer}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap font-medium">{record.nama}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap">{record.role}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap">{record.presensiTime}</td>
+                      <td className="p-3 md:p-4 whitespace-nowrap">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleApprove(record)}
+                            disabled={saving}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md font-label-sm text-label-sm flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                          >
+                            <span className="material-symbols-outlined text-sm">check</span>
+                            Setujui
+                          </button>
+                          <button
+                            onClick={() => handleReject(record)}
+                            disabled={saving}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md font-label-sm text-label-sm flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                          >
+                            <span className="material-symbols-outlined text-sm">close</span>
+                            Tolak
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {savedPresensi.length > 0 && (
         <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
