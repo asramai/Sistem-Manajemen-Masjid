@@ -271,9 +271,15 @@ export default function RekapKehadiranSaya() {
           {/* Profile Summary Card */}
           <div className="glass-card rounded-xl p-6 relative overflow-hidden">
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
-            <div className="flex items-center gap-4 mb-6 relative z-10">
-              <div className="w-16 h-16 rounded-full bg-surface-container-high border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
-                <span className="material-symbols-outlined text-3xl text-primary">person</span>
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="w-16 h-16 rounded-full bg-surface-container-high border-2 border-white shadow-sm overflow-hidden shrink-0">
+                {petugas?.avatar_url ? (
+                  <img alt={profile?.nama || 'Avatar'} className="w-full h-full object-cover" src={petugas.avatar_url} />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-secondary font-h3">
+                    {profile?.nama?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+                  </div>
+                )}
               </div>
               <div>
                 <h3 className="font-title-md text-title-md text-on-surface">{profile?.nama || 'User'}</h3>
@@ -281,12 +287,6 @@ export default function RekapKehadiranSaya() {
                   {petugas?.role || 'Petugas'}
                 </div>
               </div>
-            </div>
-            <div className="border-t border-outline-variant/30 pt-4 mt-2 relative z-10">
-              <p className="font-label-md text-label-md text-on-surface-variant mb-1 uppercase text-xs">Honor Per Hadir</p>
-              <p className="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold">
-                {formatCurrency(petugas.honor_per_hadir || 0)}
-              </p>
             </div>
           </div>
 
