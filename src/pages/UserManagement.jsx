@@ -488,11 +488,38 @@ export default function UserManagement() {
   const [createdPassword, setCreatedPassword] = useState('')
   const [userModalOpen, setUserModalOpen] = useState(false)
   const [savingUser, setSavingUser] = useState(false)
-  const [userForm, setUserForm] = useState({ nama: '', email: '', password: '', role: 'admin', phone: '' })
+  const [userForm, setUserForm] = useState({ nama: '', email: '', password: '', role: 'admin', phone: '', petugas_id: '' })
+  const [petugasWithoutAccount, setPetugasWithoutAccount] = useState([])
 
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+    if (userModalOpen) {
+      fetchPetugasWithoutAccount()
+    }
+  }, [userModalOpen])
+
+  useEffect(() => {
+    if (userForm.role !== 'petugas') {
+      setUserForm((prev) => ({ ...prev, petugas_id: '' }))
+    }
+  }, [userForm.role])
+
+  const fetchPetugasWithoutAccount = async () => {
+    const { data, error } = await supabase
+      .from('petugas')
+      .select('id, nama, role')
+      .is('auth_user_id', null)
+      .order('nama')
+
+    if (error) {
+      console.error('Error fetching petugas without account:', error)
+    } else {
+      setPetugasWithoutAccount(data || [])
+    }
+  }
 
   const fetchData = async () => {
     setLoading(true)
@@ -610,12 +637,25 @@ export default function UserManagement() {
       const userId = data.user?.id
       if (!userId) throw new Error('Gagal membuat akun')
 
+      if (userForm.role === 'petugas' && userForm.petugas_id) {
+        const { error: updatePetugasError } = await supabase
+          .from('petugas')
+          .update({ auth_user_id: userId })
+          .eq('id', userForm.petugas_id)
+
+        if (updatePetugasError) {
+          console.error('Gagal menghubungkan ke petugas:', updatePetugasError)
+          alert('Akun berhasil dibuat, tapi gagal menghubungkan ke data petugas.')
+        }
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       alert('Akun berhasil dibuat!')
-      setUserForm({ nama: '', email: '', password: '', role: 'admin', phone: '' })
+      setUserForm({ nama: '', email: '', password: '', role: 'admin', phone: '', petugas_id: '' })
       setUserModalOpen(false)
       fetchData()
+      fetchPetugasWithoutAccount()
       setTimeout(() => window.location.reload(), 1200)
     } catch (err) {
       alert('Gagal membuat akun: ' + (err.message || err))
@@ -935,6 +975,25 @@ export default function UserManagement() {
                   <option value="petugas">Petugas</option>
                 </select>
               </div>
+              {userForm.role === 'petugas' && (
+                <div>
+                  <label className="font-label-md text-label-md text-on-surface block mb-1.5">Hubungkan ke Data Petugas</label>
+                  <select
+                    className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-body-md"
+                    value={userForm.petugas_id}
+                    onChange={(e) => setUserForm((prev) => ({ ...prev, petugas_id: e.target.value }))}
+                    required={userForm.role === 'petugas'}
+                  >
+                    <option value="">-- Pilih Petugas --</option>
+                    {petugasWithoutAccount.map((p) => (
+                      <option key={p.id} value={p.id}>{p.nama} ({petugasRoleLabel[p.role] || p.role})</option>
+                    ))}
+                  </select>
+                  {petugasWithoutAccount.length === 0 && (
+                    <p className="text-xs text-on-surface-variant mt-1">Tidak ada petugas yang belum memiliki akun.</p>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="font-label-md text-label-md text-on-surface block mb-1.5">Nomor HP</label>
                 <input
