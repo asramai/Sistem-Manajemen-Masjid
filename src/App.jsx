@@ -14,6 +14,7 @@ import HomePage from './pages/HomePage'
 import CetakLaporanGaji from './pages/CetakLaporanGaji'
 import CetakDetailLaporanGaji from './pages/CetakDetailLaporanGaji'
 import MyProfile from './pages/MyProfile'
+import PresensiSaya from './pages/PresensiSaya'
 
 const ROLE = {
   SUPER_ADMIN: 'super_admin',
@@ -32,7 +33,7 @@ const ACCESS = {
     profilTabs: false,
   },
   [ROLE.PETUGAS]: {
-    menu: ['beranda', 'jadwal-saya', 'izin', 'rekap', 'profil'],
+    menu: ['beranda', 'jadwal-saya', 'izin', 'rekap', 'profil', 'presensi-saya'],
     profilTabs: false,
   },
   [ROLE.TAKMIR]: {
@@ -53,7 +54,7 @@ const MENU_GROUPS = {
     { key: 'manajemen', items: ['izin', 'profil'] },
   ],
   [ROLE.PETUGAS]: [
-    { key: 'utama', items: ['beranda', 'jadwal-saya'] },
+    { key: 'utama', items: ['beranda', 'jadwal-saya', 'presensi-saya'] },
     { key: 'manajemen', items: ['izin', 'rekap', 'profil'] },
   ],
   [ROLE.TAKMIR]: [
@@ -73,6 +74,7 @@ const MENU_ITEMS = {
   laporan: { label: 'Laporan', icon: 'description', path: '/laporan' },
   transport: { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
   jadwal: { label: 'Jadwal', icon: 'calendar_month', path: '/jadwal' },
+  'presensi-saya': { label: 'Presensi', icon: 'fact_check', path: '/presensi-saya' },
 }
 
 function TopAppBar({ currentPath, onLogout, profile }) {
@@ -316,6 +318,7 @@ export default function App() {
         {currentPath === '/jadwal' && isAllowed('/jadwal') && <JadwalPerBulan />}
         {currentPath === '/jadwal-saya' && isAllowed('/jadwal-saya') && <JadwalSaya />}
         {currentPath === '/konfirmasi-izin' && isAllowed('/izin') && <KonfirmasiIzin />}
+        {currentPath === '/presensi-saya' && isAllowed('/presensi-saya') && <PresensiSaya />}
         {currentPath === '/' && <HomePage />}
       </main>
       {session && !isCetakLaporan && (
