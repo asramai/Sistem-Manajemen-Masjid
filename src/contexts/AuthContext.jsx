@@ -78,6 +78,7 @@ export function AuthProvider({ children }) {
     if (error) {
       console.error('Error fetching profile:', error)
     } else {
+      console.log('Fetched profile:', data)
       setProfile(data)
     }
     setLoading(false)
