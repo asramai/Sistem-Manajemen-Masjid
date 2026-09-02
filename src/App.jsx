@@ -10,7 +10,6 @@ import BiayaTransport from './pages/BiayaTransport'
 import JadwalPerBulan from './pages/JadwalPerBulan'
 import JadwalSaya from './pages/JadwalSaya'
 import KonfirmasiIzin from './pages/KonfirmasiIzin'
-import BuatAkunPetugas from './pages/BuatAkunPetugas'
 import HomePage from './pages/HomePage'
 import CetakLaporanGaji from './pages/CetakLaporanGaji'
 import CetakDetailLaporanGaji from './pages/CetakDetailLaporanGaji'
@@ -25,7 +24,7 @@ const ROLE = {
 
 const ACCESS = {
   [ROLE.SUPER_ADMIN]: {
-    menu: ['beranda', 'presensi', 'jadwal', 'laporan', 'transport', 'izin', 'rekap', 'buat-akun', 'profil'],
+    menu: ['beranda', 'presensi', 'jadwal', 'laporan', 'transport', 'izin', 'rekap', 'profil'],
     profilTabs: true,
   },
   [ROLE.ADMIN]: {
@@ -46,7 +45,7 @@ const MENU_GROUPS = {
   [ROLE.SUPER_ADMIN]: [
     { key: 'utama', items: ['beranda', 'presensi', 'jadwal'] },
     { key: 'keuangan', items: ['laporan', 'transport'] },
-    { key: 'manajemen', items: ['izin', 'rekap', 'buat-akun', 'profil'] },
+    { key: 'manajemen', items: ['izin', 'rekap', 'profil'] },
   ],
   [ROLE.ADMIN]: [
     { key: 'utama', items: ['beranda', 'jadwal', 'presensi'] },
@@ -74,7 +73,6 @@ const MENU_ITEMS = {
   laporan: { label: 'Laporan', icon: 'description', path: '/laporan' },
   transport: { label: 'Transport', icon: 'commute', path: '/biaya-transport' },
   jadwal: { label: 'Jadwal', icon: 'calendar_month', path: '/jadwal' },
-  'buat-akun': { label: 'Buat Akun', icon: 'person_add', path: '/buat-akun' },
 }
 
 function TopAppBar({ currentPath, onLogout, profile }) {
@@ -318,7 +316,6 @@ export default function App() {
         {currentPath === '/jadwal' && isAllowed('/jadwal') && <JadwalPerBulan />}
         {currentPath === '/jadwal-saya' && isAllowed('/jadwal-saya') && <JadwalSaya />}
         {currentPath === '/konfirmasi-izin' && isAllowed('/izin') && <KonfirmasiIzin />}
-        {currentPath === '/buat-akun' && isAllowed('/buat-akun') && <BuatAkunPetugas />}
         {currentPath === '/' && <HomePage />}
       </main>
       {session && !isCetakLaporan && (
