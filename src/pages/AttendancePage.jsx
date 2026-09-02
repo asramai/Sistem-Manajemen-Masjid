@@ -146,7 +146,6 @@ export default function AttendancePage() {
     const { data, error } = await supabase
       .from('presensi')
       .select('*')
-      .eq('jadwal_id', jadwalItem.id)
       .eq('tanggal', selectedDate)
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
@@ -156,8 +155,10 @@ export default function AttendancePage() {
       return
     }
 
+    const filtered = (data || []).filter((record) => record.jadwal_id === jadwalItem.id)
+
     const enriched = await Promise.all(
-      (data || []).map(async (record) => {
+      filtered.map(async (record) => {
         const pengganti = petugas.find((p) => p.id === record.petugas_id)
         let nama = pengganti?.nama || '-'
         let role = '-'
@@ -231,7 +232,7 @@ export default function AttendancePage() {
     setLoading(true)
     const [petugasResult, jadwalResult] = await Promise.all([
       supabase.from('petugas').select('*').eq('is_active', true).order('nama'),
-      supabase.from('jadwal').select('*').order('nama_sholat'),
+      supabase.from('jadwal').select('*').order('id'),
     ])
 
     if (petugasResult.error) console.error('Error fetching petugas:', petugasResult.error)

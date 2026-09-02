@@ -52,13 +52,16 @@ export default function PresensiSaya() {
     const { data: jadwalData } = await supabase
       .from('jadwal')
       .select('*')
+      .order('id')
 
     const jadwalList = Array.isArray(jadwalData) ? jadwalData : []
     const jadwalBulananList = Array.isArray(jadwalBulananData) ? jadwalBulananData : []
 
     const jadwalMapLocal = {}
     jadwalList.forEach((j) => {
-      jadwalMapLocal[j.nama_sholat] = j
+      if (!jadwalMapLocal[j.nama_sholat]) {
+        jadwalMapLocal[j.nama_sholat] = j
+      }
     })
     setJadwalMap(jadwalMapLocal)
 
