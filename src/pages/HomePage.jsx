@@ -120,6 +120,15 @@ export default function HomePage() {
     if (izinResult.error) console.error('Error fetching izin:', izinResult.error)
     if (biayaResult.error) console.error('Error fetching biaya:', biayaResult.error)
 
+    console.log('fetchData results:', {
+      petugas: petugasResult.data?.length,
+      jadwal: jadwalResult.data?.length,
+      jadwalMaster: jadwalMasterResult.data?.length,
+      presensi: presensiResult.data?.length,
+      izin: izinResult.data?.length,
+      biaya: biayaResult.data?.length,
+    })
+
     setPetugasList(petugasResult.data || [])
     setJadwalBulanan(jadwalResult.data || [])
 
