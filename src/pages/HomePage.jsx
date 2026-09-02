@@ -186,6 +186,40 @@ export default function HomePage() {
     return p ? p.nama : '-'
   }
 
+  const getPetugasInitials = (id) => {
+    const p = petugasList.find((pet) => pet.id === id)
+    return p ? getInitials(p.nama) : '-'
+  }
+
+  const getStatusForPetugas = (jadwal, role) => {
+    const roleMap = {
+      imam: 'imam_utama_id',
+      muadzin: 'muadzin_utama_id',
+    }
+    const field = roleMap[role]
+    if (!field) return { label: '-', icon: null, pengganti: null, color: 'text-on-surface' }
+
+    const utamaId = jadwal[field]
+    const cadanganId = jadwal[field.replace('utama', 'cadangan')] || null
+    const masterJadwalIds = jadwalMap[jadwal.nama_sholat] || []
+    const presensiJadwal = masterJadwalIds.length > 0 ? todayPresensi.filter((pr) => masterJadwalIds.includes(pr.jadwal_id)) : []
+
+    const utamaHadir = presensiJadwal.find((pr) => pr.petugas_id === utamaId && pr.status === 'hadir')
+    const cadanganHadir = presensiJadwal.find((pr) => pr.petugas_id === cadanganId && pr.status === 'hadir')
+    const pengganti = presensiJadwal.find((pr) => pr.petugas_pengganti_id === utamaId && pr.status === 'hadir')
+
+    if (utamaHadir) {
+      return { label: getPetugasName(utamaId), icon: 'check_circle', pengganti: null, color: 'text-green-600' }
+    }
+    if (cadanganHadir) {
+      return { label: getPetugasName(cadanganId), icon: 'check_circle', pengganti: null, color: 'text-green-600' }
+    }
+    if (pengganti) {
+      return { label: getPetugasName(pengganti.petugas_id), icon: null, pengganti: null, color: 'text-orange-600' }
+    }
+    return { label: getPetugasName(utamaId), icon: null, pengganti: null, color: 'text-on-surface' }
+  }
+
   if (loading) {
     return (
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-gutter pt-8 pb-12 flex items-center justify-center min-h-[300px]">
@@ -253,13 +287,18 @@ export default function HomePage() {
                 todayJadwal.map((jadwal) => {
                   const masterJadwalIds = jadwalMap[jadwal.nama_sholat] || []
                   const presensiCount = masterJadwalIds.length > 0 ? todayPresensi.filter((pr) => masterJadwalIds.includes(pr.jadwal_id)).length : 0
+                  const imamStatus = getStatusForPetugas(jadwal, 'imam')
+                  const muadzinStatus = getStatusForPetugas(jadwal, 'muadzin')
                   return (
                     <div key={jadwal.id} className="p-4 hover:bg-surface-container-low transition-colors">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-body-md font-semibold text-on-surface">{jadwal.nama_sholat}</p>
                           <p className="font-body-sm text-body-sm text-on-surface-variant">
-                            Imam: {getPetugasName(jadwal.imam_utama_id)} | Muadzin: {getPetugasName(jadwal.muadzin_utama_id)}
+                            Imam: {imamStatus.label} {imamStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{imamStatus.icon}</span>}
+                          </p>
+                          <p className="font-body-sm text-body-sm text-on-surface-variant">
+                            Muadzin: {muadzinStatus.label} {muadzinStatus.icon && <span className="material-symbols-outlined text-green-600 text-sm" style={{ verticalAlign: 'middle' }}>{muadzinStatus.icon}</span>}
                           </p>
                         </div>
                         <span className="px-3 py-1 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
