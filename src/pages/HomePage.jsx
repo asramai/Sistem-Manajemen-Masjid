@@ -166,7 +166,7 @@ export default function HomePage() {
 
   const myPresensi = useMemo(() => {
     if (!currentPetugasId) return []
-    return todayPresensi.filter((pr) => pr.petugas_id === currentPetugasId)
+    return todayPresensi.filter((pr) => pr.petugas_id === currentPetugasId && pr.status === 'hadir')
   }, [todayPresensi, currentPetugasId])
 
   const myIzin = useMemo(() => {
@@ -296,7 +296,7 @@ export default function HomePage() {
               ) : (
                 todayJadwal.map((jadwal) => {
                   const masterJadwalIds = jadwalMap[jadwal.nama_sholat] || []
-                  const presensiCount = masterJadwalIds.length > 0 ? todayPresensi.filter((pr) => masterJadwalIds.includes(pr.jadwal_id)).length : 0
+                  const presensiCount = masterJadwalIds.length > 0 ? todayPresensi.filter((pr) => masterJadwalIds.includes(pr.jadwal_id) && pr.status === 'hadir').length : 0
                   const imamStatus = getStatusForPetugas(jadwal, 'imam')
                   const muadzinStatus = getStatusForPetugas(jadwal, 'muadzin')
                   return (
