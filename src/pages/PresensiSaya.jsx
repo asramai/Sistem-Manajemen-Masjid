@@ -119,7 +119,15 @@ export default function PresensiSaya() {
     if (!myRole) return false
     const jadwalId = jadwalMap[jadwal.nama_sholat]?.id
     if (!jadwalId) return false
-    return presensiList.some((p) => p.jadwal_id === jadwalId && p.petugas_id === petugas.id && (p.status === 'hadir' || p.status === 'pending'))
+    return presensiList.some((p) => p.jadwal_id === jadwalId && p.petugas_id === petugas.id && p.status === 'hadir')
+  }
+
+  const isPending = (jadwal) => {
+    const myRole = getMyRole(jadwal)
+    if (!myRole) return false
+    const jadwalId = jadwalMap[jadwal.nama_sholat]?.id
+    if (!jadwalId) return false
+    return presensiList.some((p) => p.jadwal_id === jadwalId && p.petugas_id === petugas.id && p.status === 'pending')
   }
 
   const handlePresensi = async (jadwal) => {
@@ -139,13 +147,35 @@ export default function PresensiSaya() {
       return
     }
 
+    if (isPending(jadwal)) {
+      alert('Anda sudah mengajukan presensi dan menunggu validasi admin.')
+      return
+    }
+
+    const jadwalId = jadwalMap[jadwal.nama_sholat]?.id
+    if (!jadwalId) {
+      alert('Data jadwal tidak ditemukan. Hubungi admin.')
+      return
+    }
+
     setSaving(true)
     setMessage('')
 
     try {
-      const jadwalId = jadwalMap[jadwal.nama_sholat]?.id
-      if (!jadwalId) {
-        alert('Data jadwal tidak ditemukan. Hubungi admin.')
+      const { data: currentAssignment } = await supabase
+        .from('jadwal_bulanan')
+        .select('*')
+        .eq('tanggal', today)
+        .eq('nama_sholat', jadwal.nama_sholat)
+        .maybeSingle()
+
+      if (!currentAssignment || !(
+        currentAssignment.imam_utama_id === petugas.id ||
+        currentAssignment.imam_cadangan_id === petugas.id ||
+        currentAssignment.muadzin_utama_id === petugas.id ||
+        currentAssignment.muadzin_cadangan_id === petugas.id
+      )) {
+        alert('Anda tidak lagi memiliki jadwal untuk waktu sholat ini. Hubungi admin.')
         setSaving(false)
         return
       }
@@ -249,7 +279,7 @@ export default function PresensiSaya() {
                       </p>
                     )}
                   </div>
-                  {assigned && !done && (
+                  {assigned && !done && !hasPending && (
                     <button
                       onClick={() => handlePresensi(jadwal)}
                       disabled={saving}
