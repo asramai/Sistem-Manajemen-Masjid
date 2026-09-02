@@ -53,13 +53,16 @@ export default function PresensiSaya() {
       .from('jadwal')
       .select('*')
 
+    const jadwalList = Array.isArray(jadwalData) ? jadwalData : []
+    const jadwalBulananList = Array.isArray(jadwalBulananData) ? jadwalBulananData : []
+
     const jadwalMapLocal = {}
-    (jadwalData || []).forEach((j) => {
+    jadwalList.forEach((j) => {
       jadwalMapLocal[j.nama_sholat] = j
     })
     setJadwalMap(jadwalMapLocal)
 
-    const filteredJadwal = (jadwalBulananData || []).filter((j) => prayers.includes(j.nama_sholat))
+    const filteredJadwal = jadwalBulananList.filter((j) => prayers.includes(j.nama_sholat))
     setJadwalHariIni(filteredJadwal)
 
     if (petugasData || profile?.nama) {
@@ -77,7 +80,7 @@ export default function PresensiSaya() {
             .select('*')
             .eq('petugas_id', byName.id)
             .eq('tanggal', today)
-          setPresensiList(presensiData || [])
+          setPresensiList(Array.isArray(presensiData) ? presensiData : [])
         }
       } else if (petugasId) {
         const { data: presensiData } = await supabase
@@ -85,7 +88,7 @@ export default function PresensiSaya() {
           .select('*')
           .eq('petugas_id', petugasId)
           .eq('tanggal', today)
-        setPresensiList(presensiData || [])
+        setPresensiList(Array.isArray(presensiData) ? presensiData : [])
       }
     }
 
