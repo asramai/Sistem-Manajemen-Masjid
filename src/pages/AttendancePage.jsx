@@ -288,7 +288,7 @@ export default function AttendancePage() {
     if (!jadwalItem) return
     setSaving(true)
 
-    const records = [
+    const rawRecords = [
       {
         petugas_id: penugasan.muadzin_utama_id,
         jadwal_id: jadwalItem.id,
@@ -318,6 +318,14 @@ export default function AttendancePage() {
         peran: 'imam',
       },
     ].filter((r) => r.petugas_id)
+
+    const seen = new Set()
+    const records = rawRecords.filter((record) => {
+      const key = `${record.petugas_id}|${record.jadwal_id}|${record.tanggal}|${record.status}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
 
     if (records.length === 0) {
       alert('Tidak ada data presensi untuk disimpan')
