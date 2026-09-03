@@ -353,7 +353,8 @@ export default function AttendancePage() {
       const results = await Promise.all(promises)
       const hasError = results.some((r) => r.error)
       if (hasError) {
-        alert('Gagal menyimpan beberapa data')
+        const failed = results.filter((r) => r.error)
+        alert('Gagal menyimpan: ' + failed.map((r) => r.error.message || 'Unknown').join(', '))
       } else {
         alert(`Presensi ${selectedPrayer} berhasil disimpan!`)
         fetchSavedPresensi()
