@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../contexts/ToastContext'
 
 const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya']
 
 export default function PresensiSaya() {
   const { profile, session } = useAuth()
+  const toast = useToast()
   const [petugas, setPetugas] = useState(null)
   const [jadwalHariIni, setJadwalHariIni] = useState([])
   const [jadwalMap, setJadwalMap] = useState({})
   const [presensiList, setPresensiList] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -135,34 +136,33 @@ export default function PresensiSaya() {
 
   const handlePresensi = async (jadwal) => {
     if (!petugas?.id) {
-      alert('Data petugas tidak ditemukan. Hubungi admin.')
+      toast.addToast('Data petugas tidak ditemukan. Hubungi admin.', 'error')
       return
     }
 
     const myRole = getMyRole(jadwal)
     if (!myRole) {
-      alert('Anda tidak memiliki jadwal untuk waktu sholat ini.')
+      toast.addToast('Anda tidak memiliki jadwal untuk waktu sholat ini.', 'error')
       return
     }
 
     if (alreadyPresensi(jadwal)) {
-      alert('Anda sudah melakukan presensi untuk waktu sholat ini.')
+      toast.addToast('Anda sudah melakukan presensi untuk waktu sholat ini.', 'warning')
       return
     }
 
     if (isPending(jadwal)) {
-      alert('Anda sudah mengajukan presensi dan menunggu validasi admin.')
+      toast.addToast('Anda sudah mengajukan presensi dan menunggu validasi admin.', 'warning')
       return
     }
 
     const jadwalId = jadwalMap[jadwal.nama_sholat]?.id
     if (!jadwalId) {
-      alert('Data jadwal tidak ditemukan. Hubungi admin.')
+      toast.addToast('Data jadwal tidak ditemukan. Hubungi admin.', 'error')
       return
     }
 
     setSaving(true)
-    setMessage('')
 
     try {
       const { data: currentAssignment } = await supabase
@@ -178,7 +178,7 @@ export default function PresensiSaya() {
         currentAssignment.muadzin_utama_id === petugas.id ||
         currentAssignment.muadzin_cadangan_id === petugas.id
       )) {
-        alert('Anda tidak lagi memiliki jadwal untuk waktu sholat ini. Hubungi admin.')
+        toast.addToast('Anda tidak lagi memiliki jadwal untuk waktu sholat ini. Hubungi admin.', 'error')
         setSaving(false)
         return
       }
@@ -193,7 +193,7 @@ export default function PresensiSaya() {
         .maybeSingle()
 
       if (existing) {
-        alert('Presensi untuk waktu sholat ini sudah tercatat.')
+        toast.addToast('Presensi untuk waktu sholat ini sudah tercatat.', 'warning')
         setSaving(false)
         fetchData()
         return
@@ -209,17 +209,17 @@ export default function PresensiSaya() {
 
       if (error) {
         if (error.code === '23505') {
-          alert('Presensi untuk waktu sholat ini sudah tercatat.')
+          toast.addToast('Presensi untuk waktu sholat ini sudah tercatat.', 'warning')
         } else {
-          throw error
+          toast.addToast('Gagal presensi: ' + (error.message || err), 'error')
         }
         return
       }
 
-      setMessage('Presensi berhasil!')
+      toast.addToast('Presensi berhasil! Menunggu validasi admin.', 'success')
       fetchData()
     } catch (err) {
-      setMessage('Gagal presensi: ' + (err.message || err))
+      toast.addToast('Gagal presensi: ' + (err.message || err), 'error')
     } finally {
       setSaving(false)
     }
@@ -252,12 +252,6 @@ export default function PresensiSaya() {
         <h1 className="font-h1 text-h1 text-on-surface mb-2">Presensi Saya</h1>
         <p className="font-body-md text-body-md text-on-surface-variant">Lakukan presensi kehadiran untuk jadwal sholat hari ini.</p>
       </div>
-
-      {message && (
-        <div className={`mb-6 p-4 rounded-lg ${message.includes('berhasil') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-          {message}
-        </div>
-      )}
 
       {jadwalHariIni.length === 0 ? (
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 text-center">

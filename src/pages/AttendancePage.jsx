@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../contexts/ToastContext'
 
 const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya']
 
@@ -21,6 +22,7 @@ function getInitials(name) {
 }
 
 export default function AttendancePage() {
+  const toast = useToast()
   const [selectedPrayer, setSelectedPrayer] = useState('Subuh')
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date()
@@ -212,7 +214,7 @@ export default function AttendancePage() {
             peran: record.peran,
             aksi: 'tolak',
           })
-          alert('Presensi petugas ditolak.')
+          toast.addToast('Presensi petugas ditolak.', 'warning')
           fetchPendingPresensi()
           setSaving(false)
           return
@@ -227,7 +229,7 @@ export default function AttendancePage() {
         .eq('id', record.id)
 
       if (error) {
-        alert('Gagal menyetujui presensi: ' + error.message)
+        toast.addToast('Gagal menyetujui presensi: ' + error.message, 'error')
         return
       }
 
@@ -242,11 +244,11 @@ export default function AttendancePage() {
         aksi: 'setujui',
       })
 
-      alert(`Presensi ${record.nama} berhasil disetujui!`)
+      toast.addToast(`Presensi ${record.nama} berhasil disetujui!`, 'success')
       fetchSavedPresensi()
       fetchPendingPresensi()
     } catch (err) {
-      alert('Terjadi kesalahan saat menyetujui presensi')
+      toast.addToast('Terjadi kesalahan saat menyetujui presensi', 'error')
     } finally {
       setSaving(false)
     }
@@ -263,7 +265,7 @@ export default function AttendancePage() {
         .eq('id', record.id)
 
       if (error) {
-        alert('Gagal menolak presensi: ' + error.message)
+        toast.addToast('Gagal menolak presensi: ' + error.message, 'error')
         return
       }
 
@@ -278,10 +280,10 @@ export default function AttendancePage() {
         aksi: 'tolak',
       })
 
-      alert(`Presensi ${record.nama} berhasil ditolak dan dihapus.`)
+      toast.addToast(`Presensi ${record.nama} berhasil ditolak dan dihapus.`, 'warning')
       fetchPendingPresensi()
     } catch (err) {
-      alert('Terjadi kesalahan saat menolak presensi')
+      toast.addToast('Terjadi kesalahan saat menolak presensi', 'error')
     } finally {
       setSaving(false)
     }
@@ -387,7 +389,7 @@ export default function AttendancePage() {
     })
 
     if (records.length === 0) {
-      alert('Tidak ada data presensi untuk disimpan')
+      toast.addToast('Tidak ada data presensi untuk disimpan', 'warning')
       setSaving(false)
       return
     }
@@ -400,7 +402,7 @@ export default function AttendancePage() {
         .eq('tanggal', selectedDate)
 
       if (deleteError) {
-        alert('Gagal menghapus data lama: ' + deleteError.message)
+        toast.addToast('Gagal menghapus data lama: ' + deleteError.message, 'error')
         setSaving(false)
         return
       }
@@ -421,9 +423,9 @@ export default function AttendancePage() {
       const hasError = results.some((r) => r.error)
       if (hasError) {
         const failed = results.filter((r) => r.error)
-        alert('Gagal menyimpan: ' + failed.map((r) => r.error.message || 'Unknown').join(', '))
+        toast.addToast('Gagal menyimpan: ' + failed.map((r) => r.error.message || 'Unknown').join(', '), 'error')
       } else {
-        alert(`Presensi ${selectedPrayer} berhasil disimpan!`)
+        toast.addToast(`Presensi ${selectedPrayer} berhasil disimpan!`, 'success')
         fetchSavedPresensi()
 
         for (const record of records) {
@@ -440,7 +442,7 @@ export default function AttendancePage() {
         }
       }
     } catch (err) {
-      alert('Terjadi kesalahan saat menyimpan')
+      toast.addToast('Terjadi kesalahan saat menyimpan', 'error')
     } finally {
       setSaving(false)
     }
