@@ -321,7 +321,7 @@ export default function AttendancePage() {
 
     const seen = new Set()
     const records = rawRecords.filter((record) => {
-      const key = `${record.petugas_id}|${record.jadwal_id}|${record.tanggal}|${record.status}`
+      const key = `${record.petugas_id}|${record.jadwal_id}|${record.tanggal}|${record.status}|${record.peran}`
       if (seen.has(key)) return false
       seen.add(key)
       return true
