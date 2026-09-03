@@ -65,6 +65,7 @@ export default function HomePage() {
 
   const isSuperAdmin = profile?.role === 'super_admin'
   const canViewAdminStats = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'takmir'
+  const showQuickActions = profile?.role !== 'takmir'
   const [currentPetugasId, setCurrentPetugasId] = useState(null)
 
   const today = useMemo(() => {
@@ -323,15 +324,15 @@ export default function HomePage() {
           </section>
 
           {/* Quick Actions */}
-          <section>
-            <h3 className="font-h3 text-h3 text-on-surface mb-4">Aksi Cepat</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <QuickAction icon="fact_check" label="Input Presensi" onClick={() => navigate('/presensi')} color="bg-primary-container text-white" />
-              <QuickAction icon="calendar_month" label="Buat Jadwal" onClick={() => navigate('/jadwal')} color="bg-secondary text-on-surface" />
-              <QuickAction icon="description" label="Laporan" onClick={() => navigate('/laporan')} color="bg-tertiary text-on-surface" />
-              <QuickAction icon="person_add" label="Buat Akun" onClick={() => navigate('/buat-akun')} color="bg-surface-container-high text-on-surface" />
-            </div>
-          </section>
+          {showQuickActions && (
+            <section>
+              <h3 className="font-h3 text-h3 text-on-surface mb-4">Aksi Cepat</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <QuickAction icon="calendar_month" label="Jadwal" onClick={() => navigate('/jadwal')} color="bg-secondary text-on-surface" />
+                <QuickAction icon="description" label="Laporan" onClick={() => navigate('/laporan')} color="bg-primary-container text-white" />
+              </div>
+            </section>
+          )}
         </>
       ) : (
         <>
@@ -406,14 +407,16 @@ export default function HomePage() {
           </section>
 
           {/* Quick Actions */}
-          <section>
-            <h3 className="font-h3 text-h3 text-on-surface mb-4">Aksi Cepat</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <QuickAction icon="calendar_today" label="Jadwal Saya" onClick={() => navigate('/jadwal-saya')} color="bg-primary-container text-white" />
-              <QuickAction icon="event_busy" label="Buat Izin" onClick={() => navigate('/konfirmasi-izin')} color="bg-secondary text-on-surface" />
-              <QuickAction icon="description" label="Rekap Kehadiran" onClick={() => navigate('/rekap')} color="bg-tertiary text-on-surface" />
-            </div>
-          </section>
+          {showQuickActions && (
+            <section>
+              <h3 className="font-h3 text-h3 text-on-surface mb-4">Aksi Cepat</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <QuickAction icon="calendar_today" label="Jadwal Saya" onClick={() => navigate('/jadwal-saya')} color="bg-primary-container text-white" />
+                <QuickAction icon="event_busy" label="Buat Izin" onClick={() => navigate('/konfirmasi-izin')} color="bg-secondary text-on-surface" />
+                <QuickAction icon="description" label="Rekap Kehadiran" onClick={() => navigate('/rekap')} color="bg-secondary text-on-surface" />
+              </div>
+            </section>
+          )}
         </>
       )}
     </div>

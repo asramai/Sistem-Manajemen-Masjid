@@ -49,13 +49,12 @@ const MENU_GROUPS = {
     { key: 'manajemen', items: ['izin', 'rekap', 'profil'] },
   ],
   [ROLE.ADMIN]: [
-    { key: 'utama', items: ['beranda', 'jadwal', 'presensi'] },
-    { key: 'keuangan', items: ['laporan'] },
-    { key: 'manajemen', items: ['izin', 'profil'] },
+    { key: 'utama', items: ['beranda', 'presensi', 'izin'] },
+    { key: 'manajemen', items: ['jadwal', 'laporan', 'profil'] },
   ],
   [ROLE.PETUGAS]: [
-    { key: 'utama', items: ['beranda', 'jadwal-saya', 'presensi-saya'] },
-    { key: 'manajemen', items: ['izin', 'rekap', 'profil'] },
+    { key: 'utama', items: ['beranda', 'presensi-saya'] },
+    { key: 'manajemen', items: ['jadwal-saya', 'izin', 'rekap', 'profil'] },
   ],
   [ROLE.TAKMIR]: [
     { key: 'utama', items: ['beranda', 'jadwal'] },
