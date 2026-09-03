@@ -183,6 +183,22 @@ export default function PresensiSaya() {
         return
       }
 
+      const { data: existing } = await supabase
+        .from('presensi')
+        .select('id, status')
+        .eq('petugas_id', petugas.id)
+        .eq('jadwal_id', jadwalId)
+        .eq('tanggal', today)
+        .limit(1)
+        .maybeSingle()
+
+      if (existing) {
+        alert('Presensi untuk waktu sholat ini sudah tercatat.')
+        setSaving(false)
+        fetchData()
+        return
+      }
+
       const { error } = await supabase.from('presensi').insert({
         petugas_id: petugas.id,
         jadwal_id: jadwalId,
@@ -191,7 +207,14 @@ export default function PresensiSaya() {
         peran: myRole,
       })
 
-      if (error) throw error
+      if (error) {
+        if (error.code === '23505') {
+          alert('Presensi untuk waktu sholat ini sudah tercatat.')
+        } else {
+          throw error
+        }
+        return
+      }
 
       setMessage('Presensi berhasil!')
       fetchData()
