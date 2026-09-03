@@ -379,17 +379,15 @@ export default function LaporanGaji() {
 
     if (type === 'pdf') {
       navigate(`/cetak-laporan?bulan=${selectedMonth}&tahun=${selectedYear}`)
-      setTimeout(() => {
-        downloadPDF('print-area', `laporan-gaji-${months[selectedMonth]}-${selectedYear}.pdf`, 'portrait')
-      }, 500)
+      await waitForElement('print-area')
+      downloadPDF('print-area', `laporan-gaji-${months[selectedMonth]}-${selectedYear}.pdf`, 'portrait')
       return
     }
 
     if (type === 'pdf-detail') {
       navigate(`/cetak-detail?bulan=${selectedMonth}&tahun=${selectedYear}`)
-      setTimeout(() => {
-        downloadPDF('print-area', `laporan-gaji-detail-${months[selectedMonth]}-${selectedYear}.pdf`, 'landscape')
-      }, 500)
+      await waitForElement('print-area')
+      downloadPDF('print-area', `laporan-gaji-detail-${months[selectedMonth]}-${selectedYear}.pdf`, 'landscape')
       return
     }
 
@@ -402,6 +400,23 @@ export default function LaporanGaji() {
       downloadWord(rows, `laporan-gaji-${months[selectedMonth]}-${selectedYear}.doc`)
       return
     }
+  }
+
+  const waitForElement = (id, timeout = 5000) => {
+    return new Promise((resolve, reject) => {
+      const start = Date.now()
+      const check = () => {
+        const el = document.getElementById(id)
+        if (el) {
+          resolve(el)
+        } else if (Date.now() - start > timeout) {
+          reject(new Error('Elemen laporan tidak ditemukan'))
+        } else {
+          setTimeout(check, 200)
+        }
+      }
+      check()
+    })
   }
 
   return (
