@@ -184,6 +184,33 @@ export default function AttendancePage() {
   const handleApprove = async (record) => {
     setSaving(true)
     try {
+      const { data: adminPresensi } = await supabase
+        .from('presensi')
+        .select('*')
+        .eq('jadwal_id', record.jadwal_id)
+        .eq('tanggal', record.tanggal)
+        .eq('status', 'hadir')
+        .eq('peran', record.peran)
+        .neq('petugas_id', record.petugas_id)
+        .limit(1)
+        .maybeSingle()
+
+      if (adminPresensi) {
+        const ganti = confirm(
+          `Presensi admin untuk ${record.peran} pada sholat ini sudah ada.\n\nKlik OK untuk mengganti presensi admin dengan presensi petugas ini.\nKlik Cancel untuk menolak presensi petugas.`
+        )
+
+        if (!ganti) {
+          await supabase.from('presensi').delete().eq('id', record.id)
+          alert('Presensi petugas ditolak.')
+          fetchPendingPresensi()
+          setSaving(false)
+          return
+        }
+
+        await supabase.from('presensi').delete().eq('id', adminPresensi.id)
+      }
+
       const { error } = await supabase
         .from('presensi')
         .update({ status: 'hadir' })
