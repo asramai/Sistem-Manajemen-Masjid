@@ -202,6 +202,16 @@ export default function AttendancePage() {
 
         if (!ganti) {
           await supabase.from('presensi').delete().eq('id', record.id)
+          await supabase.from('presensi_audit').insert({
+            presensi_id: record.id,
+            petugas_id: record.petugas_id,
+            jadwal_id: record.jadwal_id,
+            tanggal: record.tanggal,
+            status_lama: record.status,
+            status_baru: 'ditolak',
+            peran: record.peran,
+            aksi: 'tolak',
+          })
           alert('Presensi petugas ditolak.')
           fetchPendingPresensi()
           setSaving(false)
@@ -220,6 +230,17 @@ export default function AttendancePage() {
         alert('Gagal menyetujui presensi: ' + error.message)
         return
       }
+
+      await supabase.from('presensi_audit').insert({
+        presensi_id: record.id,
+        petugas_id: record.petugas_id,
+        jadwal_id: record.jadwal_id,
+        tanggal: record.tanggal,
+        status_lama: record.status,
+        status_baru: 'hadir',
+        peran: record.peran,
+        aksi: 'setujui',
+      })
 
       alert(`Presensi ${record.nama} berhasil disetujui!`)
       fetchSavedPresensi()
@@ -245,6 +266,17 @@ export default function AttendancePage() {
         alert('Gagal menolak presensi: ' + error.message)
         return
       }
+
+      await supabase.from('presensi_audit').insert({
+        presensi_id: record.id,
+        petugas_id: record.petugas_id,
+        jadwal_id: record.jadwal_id,
+        tanggal: record.tanggal,
+        status_lama: record.status,
+        status_baru: 'dihapus',
+        peran: record.peran,
+        aksi: 'tolak',
+      })
 
       alert(`Presensi ${record.nama} berhasil ditolak dan dihapus.`)
       fetchPendingPresensi()
@@ -393,6 +425,19 @@ export default function AttendancePage() {
       } else {
         alert(`Presensi ${selectedPrayer} berhasil disimpan!`)
         fetchSavedPresensi()
+
+        for (const record of records) {
+          await supabase.from('presensi_audit').insert({
+            presensi_id: record.petugas_id,
+            petugas_id: record.petugas_id,
+            jadwal_id: record.jadwal_id,
+            tanggal: record.tanggal,
+            status_lama: null,
+            status_baru: 'hadir',
+            peran: record.peran,
+            aksi: 'admin_simpan',
+          })
+        }
       }
     } catch (err) {
       alert('Terjadi kesalahan saat menyimpan')
