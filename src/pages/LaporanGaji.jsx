@@ -136,12 +136,17 @@ export default function LaporanGaji() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedRole, setSelectedRole] = useState('Semua')
+  const [selectedPetugas, setSelectedPetugas] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('Semua')
   const [search, setSearch] = useState('')
   const [roster, setRoster] = useState([])
   const [loading, setLoading] = useState(true)
   const [biayaMap, setBiayaMap] = useState({})
   const [currentPetugasId, setCurrentPetugasId] = useState(null)
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
+  const [petugasList, setPetugasList] = useState([])
 
   useEffect(() => {
     fetchRoster()
@@ -175,14 +180,18 @@ export default function LaporanGaji() {
 
   const fetchRoster = async () => {
     setLoading(true)
+
+    const baseStartDate = startDate || `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
+    const baseEndDate = endDate || `${selectedYear}-${String(selectedMonth + 2 > 12 ? selectedMonth + 2 - 12 : selectedMonth + 2).padStart(2, '0')}-01`
+
     const [petugasResult, biayaResult, jadwalBulananResult] = await Promise.all([
       supabase.from('petugas').select('*').eq('is_active', true).order('nama'),
       supabase.from('biaya_transport').select('*'),
       supabase
         .from('jadwal_bulanan')
         .select('*')
-        .gte('tanggal', `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`)
-        .lt('tanggal', `${selectedYear}-${String(selectedMonth + 2 > 12 ? selectedMonth + 2 - 12 : selectedMonth + 2).padStart(2, '0')}-01`),
+        .gte('tanggal', baseStartDate)
+        .lt('tanggal', baseEndDate),
     ])
 
     if (petugasResult.error) {
@@ -190,6 +199,8 @@ export default function LaporanGaji() {
       setLoading(false)
       return
     }
+
+    setPetugasList(petugasResult.data || [])
 
     const map = {}
     ;(biayaResult.data || []).forEach((b) => {
@@ -208,14 +219,25 @@ export default function LaporanGaji() {
       jadwalBulananMap[j.tanggal][j.nama_sholat] = j
     })
 
+    let petugasToProcess = petugasResult.data || []
+    if (selectedPetugas) {
+      petugasToProcess = petugasToProcess.filter((p) => p.id === selectedPetugas)
+    }
+
     const rosterData = await Promise.all(
-      (petugasResult.data || []).map(async (p) => {
-        const { data: presensiData } = await supabase
+      petugasToProcess.map(async (p) => {
+        let query = supabase
           .from('presensi')
           .select('status, jadwal_id, tanggal, peran')
           .eq('petugas_id', p.id)
-          .gte('tanggal', `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`)
-          .lt('tanggal', `${selectedYear}-${String(selectedMonth + 2 > 12 ? selectedMonth + 2 - 12 : selectedMonth + 2).padStart(2, '0')}-01`)
+          .gte('tanggal', baseStartDate)
+          .lt('tanggal', baseEndDate)
+
+        if (selectedStatus !== 'Semua') {
+          query = query.eq('status', selectedStatus.toLowerCase())
+        }
+
+        const { data: presensiData } = await query
 
         let hadirMuadzin = 0
         let hadirImam = 0
@@ -507,33 +529,73 @@ export default function LaporanGaji() {
 
       {/* Search and Filter Bar */}
       {canViewAll && (
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface rounded-xl p-4 border border-outline-variant shadow-sm">
-          <div className="relative w-full sm:w-96">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style={{ fontSize: '20px' }}>
-              search
-            </span>
-            <input
-              className="w-full bg-surface-bright border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg pl-10 pr-4 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-              placeholder="Cari nama petugas atau peran..."
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <div className="flex flex-col gap-4 bg-surface rounded-xl p-4 border border-outline-variant shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="relative w-full sm:w-96">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style={{ fontSize: '20px' }}>
+                search
+              </span>
+              <input
+                className="w-full bg-surface-bright border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg pl-10 pr-4 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                placeholder="Cari nama petugas atau peran..."
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+              {roles.map((role) => (
+                <button
+                  key={role}
+                  onClick={() => setSelectedRole(role)}
+                  className={`px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors ${
+                    selectedRole === role
+                      ? 'bg-secondary-container text-on-secondary-container'
+                      : 'bg-surface-bright border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-            {roles.map((role) => (
-              <button
-                key={role}
-                onClick={() => setSelectedRole(role)}
-                className={`px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors ${
-                  selectedRole === role
-                    ? 'bg-secondary-container text-on-secondary-container'
-                    : 'bg-surface-bright border border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
-                }`}
-              >
-                {role}
-              </button>
-            ))}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <select
+              className="appearance-none bg-surface-bright border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg pl-3 pr-8 py-2 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+              value={selectedPetugas}
+              onChange={(e) => setSelectedPetugas(e.target.value)}
+            >
+              <option value="">Semua Petugas</option>
+              {petugasList.map((p) => (
+                <option key={p.id} value={p.id}>{p.nama}</option>
+              ))}
+            </select>
+            <input
+              className="bg-surface-bright border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg pl-3 pr-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              placeholder="Dari tanggal"
+            />
+            <input
+              className="bg-surface-bright border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg pl-3 pr-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              placeholder="Sampai tanggal"
+            />
+            <select
+              className="appearance-none bg-surface-bright border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg pl-3 pr-8 py-2 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="Semua">Semua Status</option>
+              <option value="hadir">Hadir</option>
+              <option value="izin">Izin</option>
+              <option value="alpha">Alpha</option>
+              <option value="pending">Pending</option>
+            </select>
           </div>
         </div>
       )}
